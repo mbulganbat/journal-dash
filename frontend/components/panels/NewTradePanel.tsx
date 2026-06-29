@@ -9,25 +9,13 @@ import { useAppContext } from '../../context/AppContext';
 import toast from 'react-hot-toast';
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isSameMonth } from 'date-fns';
 import { getNetPnL, filterByAccount } from '../../data/mockTrades';
+import { ASSET_SPECS, getAssetSpec } from '../../lib/assetSpecs';
 
 const EMOTIONS = ['Focused', 'Patient', 'Neutral', 'Rushed', 'FOMO', 'Unsure'];
 const SETUPS = ['BMS+FVG', 'Order Block', 'CISD', 'Liquidity', 'Other'];
 const SESSIONS = ['London', 'NY AM', 'NY PM', 'Asian', 'Overlap'];
 const MISTAKES_LIST = ['No SL', 'Moved SL', 'Overleveraged', 'Revenge trade', 'Chased entry', 'Closed early', 'Held too long', 'Against trend'];
 const CHECKLIST_ITEMS = ['Trend aligned', 'Key level tested', 'Confirmation candle', 'R:R > 1.5', 'No major news'];
-
-const ASSET_SPECS: Record<string, { multiplier: number, pipDecimal: number }> = {
-  'EURUSD': { multiplier: 100000, pipDecimal: 4 },
-  'GBPUSD': { multiplier: 100000, pipDecimal: 4 },
-  'AUDUSD': { multiplier: 100000, pipDecimal: 4 },
-  'USDJPY': { multiplier: 1000, pipDecimal: 2 },
-  'USDCAD': { multiplier: 100000, pipDecimal: 4 },
-  'XAUUSD': { multiplier: 100, pipDecimal: 1 }, // Gold: $1 movement on 1 Lot = $100
-  'XAGUSD': { multiplier: 5000, pipDecimal: 2 }, // Silver: $1 movement on 1 Lot = $5000
-  'USOIL': { multiplier: 1000, pipDecimal: 2 }, // Crude Oil: $1 movement on 1 Lot = $1000
-  'NAS100': { multiplier: 1, pipDecimal: 1 }, // Nasdaq standard multiplier
-  'SPX500': { multiplier: 1, pipDecimal: 1 }, // S&P 500 standard multiplier
-};
 
 const SYMBOL_OPTIONS = Object.keys(ASSET_SPECS).map(s => ({ value: s, label: s }));
 
@@ -187,9 +175,9 @@ const CustomDatePicker = ({ date, setDate }: { date: Date, setDate: (d: Date) =>
 };
 
 export const NewTradePanel = () => {
-  const { openNewTrade, setOpenNewTrade, addTrade, updateTrade, editingTrade, accounts, activeAccountId, trades } = useAppContext();
+  const { openNewTrade, setOpenNewTrade, addTrade, updateTrade, editingTrade, accounts, selectedAccountId: activeAccountId, trades } = useAppContext();
 
-  const [selectedAccountId, setSelectedAccountId] = useState(activeAccountId === 'all' ? accounts[0]?.id : activeAccountId);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(activeAccountId ?? accounts[0]?.id);
   const [pair, setPair] = useState('EURUSD');
   const [direction, setDirection] = useState<'long' | 'short'>('long');
   const [outcome, setOutcome] = useState<'win' | 'loss' | 'breakeven'>('win');
@@ -235,7 +223,7 @@ export const NewTradePanel = () => {
         setScreenshot(editingTrade.screenshotUrl || null);
       } else {
         // Reset
-        setSelectedAccountId(activeAccountId === 'all' ? accounts[0]?.id : activeAccountId);
+        setSelectedAccountId(activeAccountId ?? accounts[0]?.id);
         setPair('EURUSD');
         setDirection('long');
         setOutcome('win');
@@ -322,7 +310,7 @@ export const NewTradePanel = () => {
     }
 
     // Symbol-Aware Multiplier Engine
-    const spec = ASSET_SPECS[pair] || { multiplier: 10, pipDecimal: 4 };
+    const spec = getAssetSpec(pair);
     const multiplier = spec.multiplier;
     const pipMultiplier = Math.pow(10, spec.pipDecimal);
 

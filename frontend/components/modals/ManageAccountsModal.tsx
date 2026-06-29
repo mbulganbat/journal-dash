@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { IconX, IconPlus, IconBuildingBank, IconEdit, IconTrash, IconTrophy } from '@tabler/icons-react';
 import { useAppContext } from '../../context/AppContext';
 import { scaleIn } from '../../lib/animations';
-import { getFundedProgress, getNetPnL, filterByAccount } from '../../data/mockTrades';
+import { getFundedProgress, getNetPnL, filterByAccount, getWinRate } from '../../data/mockTrades';
 import { ProgressBar } from '../ui/Shared';
 import toast from 'react-hot-toast';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -184,7 +184,7 @@ export const ManageAccountsModal = () => {
                     const accTrades = filterByAccount(trades, acc.id);
                     const netPnl = getNetPnL(accTrades);
                     const balance = acc.initialBalance + netPnl;
-                    const winRate = accTrades.length > 0 ? Math.round((accTrades.filter(t=>t.result==='win').length / accTrades.length) * 100) : 0;
+                    const winRate = getWinRate(accTrades);
                     const progress = getFundedProgress(acc, trades);
 
                     let statusColor = 'text-text-2 bg-white/[0.04] border-white/[0.08]';

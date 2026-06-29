@@ -19,6 +19,7 @@ import { stagger, fadeUp } from '../lib/animations';
 import { MetricCard, ProgressBar, premiumHoverProps } from '../components/ui/Shared';
 import { Trade } from '../types';
 import { useCountUp } from '../hooks/useCountUp';
+import { selectActiveTrades } from '../lib/selectActiveTrades';
 
 const TABS = [
   { id: 'overview', label: 'Overview & Coach', icon: IconBrain },
@@ -63,27 +64,24 @@ export const Analytics = () => {
 
   // 1. Core Filtering Engine
   const filteredTrades = useMemo(() => {
-    let r = trades;
-    
-    // Account Filter
-    if (selectedAccountId && selectedAccountId !== 'all') {
-      r = r.filter(t => t.accountId === selectedAccountId);
-    }
-    
+    // Account filter (shared challenge-account rule)
+    let r = selectActiveTrades(trades, accounts, selectedAccountId);
+
     // Period Filter
     const periodObj = PERIODS.find(p => p.id === activePeriod);
     if (periodObj && periodObj.id !== 'all') {
       const cutoffDate = subDays(new Date(), periodObj.days);
       r = r.filter(t => isAfter(new Date(t.date), cutoffDate));
     }
-    
+
     return [...r].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-  }, [trades, selectedAccountId, activePeriod]);
+  }, [trades, accounts, selectedAccountId, activePeriod]);
 
   // Calculate Initial Balance for Equity Curve
   const initialBalance = useMemo(() => {
-    if (!selectedAccountId || selectedAccountId === 'all') {
-      return accounts.reduce((sum, acc) => sum + acc.initialBalance, 0);
+    if (!selectedAccountId) {
+      // "All accounts" = sum of non-challenge accounts only.
+      return accounts.filter(a => !a.isChallenge).reduce((sum, acc) => sum + acc.initialBalance, 0);
     }
     return accounts.find(a => a.id === selectedAccountId)?.initialBalance || 0;
   }, [accounts, selectedAccountId]);
@@ -221,9 +219,9 @@ export const Analytics = () => {
 
   // Top Symbol Stats
   const symbolStats = useMemo(() => {
-    const stats: Record<string, { trades: number, wins: number, volume: number, pnl: number, grossProfit: number, grossLoss: number }> = {};
+    const stats: Record<string, { trades: number, wins: number, losses: number, volume: number, pnl: number, grossProfit: number, grossLoss: number }> = {};
     filteredTrades.forEach(t => {
-      if (!stats[t.pair]) stats[t.pair] = { trades: 0, wins: 0, volume: 0, pnl: 0, grossProfit: 0, grossLoss: 0 };
+      if (!stats[t.pair]) stats[t.pair] = { trades: 0, wins: 0, losses: 0, volume: 0, pnl: 0, grossProfit: 0, grossLoss: 0 };
       stats[t.pair].trades++;
       stats[t.pair].volume += (t.lotSize || 1);
       stats[t.pair].pnl += t.pnl;
@@ -231,11 +229,14 @@ export const Analytics = () => {
         stats[t.pair].wins++;
         stats[t.pair].grossProfit += t.pnl;
       } else if (t.result === 'loss') {
+        stats[t.pair].losses++;
         stats[t.pair].grossLoss += Math.abs(t.pnl);
       }
     });
     return Object.entries(stats).map(([pair, s]) => {
-      const wr = s.trades > 0 ? (s.wins / s.trades) * 100 : 0;
+      // Win rate excludes breakeven trades, matching getWinRate elsewhere.
+      const resolved = s.wins + s.losses;
+      const wr = resolved > 0 ? (s.wins / resolved) * 100 : 0;
       const pf = s.grossLoss > 0 ? s.grossProfit / s.grossLoss : (s.grossProfit > 0 ? Infinity : 0);
       return { pair, ...s, wr, pf };
     }).sort((a, b) => b.pnl - a.pnl);
@@ -427,14 +428,22 @@ export const Analytics = () => {
     const bestSession = sessionAnalytics.sort((a,b) => b.pnl - a.pnl)[0];
     const bestPair = pairAnalytics.sort((a,b) => b.pnl - a.pnl)[0];
     const bestSetup = setupAnalytics.sort((a,b) => b.pnl - a.pnl)[0];
-    
+
     const worstMistake = mistakeAnalytics[0];
+
+    // Worst emotion = emotion with the lowest net P&L (min 1 trade)
+    const emotionPnl: Record<string, number> = {};
+    filteredTrades.forEach(t => {
+      emotionPnl[t.emotion] = (emotionPnl[t.emotion] || 0) + t.pnl;
+    });
+    const worstEmotion = Object.entries(emotionPnl).sort((a, b) => a[1] - b[1])[0]?.[0] || 'N/A';
 
     return {
       bestSession: bestSession?.subject || 'N/A',
       bestPair: bestPair?.name || 'N/A',
       bestSetup: bestSetup?.name || 'N/A',
       bestHour: peakHours.bestTp,
+      worstEmotion,
       worstMistake: worstMistake?.name || 'N/A',
       worstMistakeCost: worstMistake?.lossAmt || 0,
       optimalRisk: '1.0% - 1.5%'
@@ -645,9 +654,8 @@ export const Analytics = () => {
           value={metrics.netPnl} 
           prefix="$" 
           icon={IconCurrencyDollar} 
-          hoverType={metrics.netPnl >= 0 ? 'positive' : 'negative'} 
-          changeColor={metrics.netPnl >= 0 ? 'text-success' : 'text-danger'} 
-          isPrivate={isPrivacyEnabled} 
+          hoverType={metrics.netPnl >= 0 ? 'positive' : 'negative'}
+          changeColor={metrics.netPnl >= 0 ? 'text-success' : 'text-danger'}
         />
         <MetricCard 
           title="Win Rate" 
@@ -790,7 +798,7 @@ export const Analytics = () => {
                           <CartesianGrid stroke="rgba(255,255,255,0.02)" vertical={false} horizontal={false} />
                           <XAxis dataKey="date" tickFormatter={v => format(new Date(v), 'MMM dd')} stroke="none" tick={{ fill: '#505060', fontSize: 11 }} dy={10} />
                           <YAxis domain={['auto', 0]} orientation="right" tickFormatter={v => `${v}%`} stroke="none" tick={{ fill: '#FF5A5A', fontSize: 11 }} width={60} />
-                          <Tooltip content={<></>} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
+                          <Tooltip content={() => null} cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }} />
                           <ReferenceLine y={0} stroke="rgba(255, 255, 255, 0.15)" strokeWidth={1.5} />
                           <Area type="monotone" dataKey="drawdown" stroke="#FF5A5A" strokeWidth={1.5} fill="url(#colorDd)" activeDot={{ r: 4, fill: '#FF5A5A', stroke: '#0C0C0E', strokeWidth: 2 }} />
                         </AreaChart>

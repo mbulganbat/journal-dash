@@ -21,11 +21,28 @@ const defaultSettings: AppSettings = {
 
 const AppContext = createContext<AppContextValue | undefined>(undefined);
 
+// Safely read + parse a JSON value from localStorage. Returns `fallback` if the
+// key is missing, the JSON is corrupt, or it fails the optional validator.
+function loadFromStorage<T>(key: string, fallback: T, validate?: (v: unknown) => boolean): T {
+  try {
+    const saved = localStorage.getItem(key);
+    if (saved === null) return fallback;
+    const parsed = JSON.parse(saved);
+    if (validate && !validate(parsed)) {
+      console.warn(`[Storage] '${key}' failed validation, using fallback.`);
+      return fallback;
+    }
+    return parsed as T;
+  } catch (e) {
+    console.error(`[Storage] Failed to parse '${key}', using fallback.`, e);
+    return fallback;
+  }
+}
+
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [accounts, setAccounts] = useState<Account[]>(() => {
-    const saved = localStorage.getItem('lumex_accounts');
-    const parsedAccounts = saved ? JSON.parse(saved) : mockAccounts;
-    return parsedAccounts.map((account: Account) => ({
+    const loaded = loadFromStorage<Account[]>('lumex_accounts', mockAccounts, Array.isArray);
+    return loaded.map(account => ({
       ...account,
       isChallenge: account.isChallenge ?? false
     }));
@@ -36,28 +53,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return saved && saved !== 'null' ? saved : null;
   });
 
-  const [trades, setTrades] = useState<Trade[]>(() => {
-    const saved = localStorage.getItem('lumex_trades');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Failed to parse trades from localStorage", e);
-      }
-    }
-    return mockTrades;
-  });
+  const [trades, setTrades] = useState<Trade[]>(() =>
+    loadFromStorage<Trade[]>('lumex_trades', mockTrades, Array.isArray)
+  );
 
   const [settings, setSettings] = useState<AppSettings>(() => {
-    const saved = localStorage.getItem('lumex_settings');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Failed to parse settings from localStorage", e);
-      }
-    }
-    return defaultSettings;
+    // Merge stored settings over defaults so newly-added fields are never undefined.
+    const stored = loadFromStorage<Partial<AppSettings>>(
+      'lumex_settings',
+      {},
+      v => typeof v === 'object' && v !== null
+    );
+    return {
+      ...defaultSettings,
+      ...stored,
+      notifications: { ...defaultSettings.notifications, ...stored.notifications },
+      tradingPrefs: { ...defaultSettings.tradingPrefs, ...stored.tradingPrefs },
+    };
   });
 
   const [openManageAccounts, setOpenManageAccounts] = useState(false);

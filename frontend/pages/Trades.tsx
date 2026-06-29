@@ -3,17 +3,21 @@ import { motion } from 'framer-motion';
 import { IconChevronUp, IconChevronDown, IconEye, IconEdit, IconTrash } from '@tabler/icons-react';
 import { useAppContext } from '../context/AppContext';
 import { stagger, fadeUp } from '../lib/animations';
+import { selectActiveTrades } from '../lib/selectActiveTrades';
+import { ConfirmDialog } from '../components/modals/ConfirmDialog';
 import { format } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { Trade } from '../types';
 
 export const Trades = () => {
-  const { trades, setEditingTrade, setOpenNewTrade, deleteTrade } = useAppContext();
+  const { trades, accounts, selectedAccountId, setEditingTrade, setOpenNewTrade, deleteTrade } = useAppContext();
   const navigate = useNavigate();
 
   const [sortBy, setSortBy] = useState<keyof Trade>('date');
   const [sortDir, setSortDir] = useState<'asc'|'desc'>('desc');
   const [currentPage, setCurrentPage] = useState(1);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const PER_PAGE = 15;
 
   const handleSort = (col: keyof Trade) => {
@@ -26,20 +30,31 @@ export const Trades = () => {
   };
 
   const sortedTrades = useMemo(() => {
-    return [...trades].sort((a, b) => {
+    const active = selectActiveTrades(trades, accounts, selectedAccountId);
+    return [...active].sort((a, b) => {
       const av = a[sortBy];
       const bv = b[sortBy];
       const dir = sortDir === 'asc' ? 1 : -1;
-      
+
       if (typeof av === 'string' && typeof bv === 'string') {
         return av.localeCompare(bv) * dir;
       }
       return (Number(av) - Number(bv)) * dir;
     });
-  }, [trades, sortBy, sortDir]);
+  }, [trades, accounts, selectedAccountId, sortBy, sortDir]);
 
-  const paginatedTrades = sortedTrades.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
-  const totalPages = Math.ceil(sortedTrades.length / PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(sortedTrades.length / PER_PAGE));
+  // Clamp page so deleting the last row on the last page can't strand the user.
+  const safePage = Math.min(currentPage, totalPages);
+  const paginatedTrades = sortedTrades.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+
+  const handleDelete = () => {
+    if (confirmDeleteId) {
+      deleteTrade(confirmDeleteId);
+      toast.success('Trade deleted successfully');
+      setConfirmDeleteId(null);
+    }
+  };
 
   const Th = ({ col, label }: { col: keyof Trade, label: string }) => (
     <th 
@@ -98,7 +113,7 @@ export const Trades = () => {
                     <div className="flex justify-end gap-1">
                       <button onClick={() => navigate(`/trade/${trade.id}`)} className="p-1.5 text-text-3 hover:text-em transition-colors"><IconEye size={16} /></button>
                       <button onClick={() => { setEditingTrade(trade); setOpenNewTrade(true); }} className="p-1.5 text-text-3 hover:text-text-1 transition-colors"><IconEdit size={16} /></button>
-                      <button onClick={() => deleteTrade(trade.id)} className="p-1.5 text-text-3 hover:text-danger transition-colors"><IconTrash size={16} /></button>
+                      <button onClick={() => setConfirmDeleteId(trade.id)} className="p-1.5 text-text-3 hover:text-danger transition-colors"><IconTrash size={16} /></button>
                     </div>
                   </td>
                 </tr>
@@ -109,17 +124,25 @@ export const Trades = () => {
         
         {/* Pagination */}
         <div className="p-4 border-t border-white/[0.06] flex justify-center gap-2">
-          <button 
-            disabled={currentPage === 1} onClick={() => setCurrentPage(p=>p-1)}
+          <button
+            disabled={safePage === 1} onClick={() => setCurrentPage(safePage - 1)}
             className="px-3 py-1 rounded-lg bg-white/[0.04] text-text-2 hover:bg-white/[0.08] disabled:opacity-30 text-sm"
           >Prev</button>
-          <span className="px-3 py-1 text-sm text-text-3">Page {currentPage} of {totalPages}</span>
-          <button 
-            disabled={currentPage === totalPages} onClick={() => setCurrentPage(p=>p+1)}
+          <span className="px-3 py-1 text-sm text-text-3">Page {safePage} of {totalPages}</span>
+          <button
+            disabled={safePage === totalPages} onClick={() => setCurrentPage(safePage + 1)}
             className="px-3 py-1 rounded-lg bg-white/[0.04] text-text-2 hover:bg-white/[0.08] disabled:opacity-30 text-sm"
           >Next</button>
         </div>
       </motion.div>
+
+      <ConfirmDialog
+        isOpen={!!confirmDeleteId}
+        onClose={() => setConfirmDeleteId(null)}
+        onConfirm={handleDelete}
+        title="Delete Trade"
+        message="Are you sure you want to delete this trade? This action cannot be undone."
+      />
     </motion.div>
   );
 };

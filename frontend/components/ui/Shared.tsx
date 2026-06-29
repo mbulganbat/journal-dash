@@ -1,5 +1,6 @@
 import React, { ReactNode } from 'react';
 import { motion } from 'framer-motion';
+import type { Transition } from 'framer-motion';
 import { fadeUp } from '../../lib/animations';
 import { useCountUp } from '../../hooks/useCountUp';
 
@@ -18,13 +19,13 @@ interface MetricCardProps {
 }
 
 export const premiumHoverProps = {
-  whileHover: { 
-    y: -4, 
-    scale: 1.005, 
-    boxShadow: "0 12px 30px rgba(0, 255, 178, 0.06)", 
-    border: "1px solid rgba(0, 255, 178, 0.2)" 
+  whileHover: {
+    y: -4,
+    scale: 1.005,
+    boxShadow: "0 12px 30px rgba(0, 255, 178, 0.06)",
+    border: "1px solid rgba(0, 255, 178, 0.2)"
   },
-  transition: { duration: 0.25, ease: "easeOut" }
+  transition: { duration: 0.25, ease: "easeOut" } as Transition
 };
 
 export const MetricCard = ({ 

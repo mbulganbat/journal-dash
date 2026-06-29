@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => {
           '/ws-proxy': {target: 'ws://localhost:5000', ws: true},
         },
       },
-      plugins: react(),
+      plugins: [react()],
       resolve: {
         alias: {
           '@': path.resolve(__dirname, '.'),

@@ -10,19 +10,7 @@ import { useAppContext } from '../context/AppContext';
 import { stagger, fadeUp } from '../lib/animations';
 import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-
-const ASSET_SPECS: Record<string, { multiplier: number, pipDecimal: number }> = {
-  'EURUSD': { multiplier: 100000, pipDecimal: 4 },
-  'GBPUSD': { multiplier: 100000, pipDecimal: 4 },
-  'AUDUSD': { multiplier: 100000, pipDecimal: 4 },
-  'USDJPY': { multiplier: 1000, pipDecimal: 2 },
-  'USDCAD': { multiplier: 100000, pipDecimal: 4 },
-  'XAUUSD': { multiplier: 100, pipDecimal: 1 }, // Gold: $1 movement on 1 Lot = $100
-  'XAGUSD': { multiplier: 5000, pipDecimal: 2 }, // Silver: $1 movement on 1 Lot = $5000
-  'USOIL': { multiplier: 1000, pipDecimal: 2 }, // Crude Oil: $1 movement on 1 Lot = $1000
-  'NAS100': { multiplier: 1, pipDecimal: 1 }, // Nasdaq standard multiplier
-  'SPX500': { multiplier: 1, pipDecimal: 1 }, // S&P 500 standard multiplier
-};
+import { derivePnl } from '../lib/assetSpecs';
 
 export const TradeDetail = () => {
   const { id } = useParams();
@@ -73,20 +61,7 @@ export const TradeDetail = () => {
   const handleOutcomeChange = (newOutcome: 'win' | 'loss' | 'breakeven') => {
     if (newOutcome === trade.result) return;
 
-    const spec = ASSET_SPECS[trade.pair] || { multiplier: 10, pipDecimal: 4 };
-    const multiplier = spec.multiplier;
-    const lot = trade.lotSize || 1;
-
-    let newPnl = 0;
-    if (newOutcome === 'win') {
-      const priceDifference = Math.abs(trade.tp - trade.entry);
-      newPnl = priceDifference * lot * multiplier;
-    } else if (newOutcome === 'loss') {
-      const priceDifference = Math.abs(trade.entry - trade.sl);
-      newPnl = -(priceDifference * lot * multiplier);
-    } else {
-      newPnl = 0;
-    }
+    const newPnl = derivePnl({ ...trade, result: newOutcome });
 
     updateTrade(trade.id, { result: newOutcome, pnl: newPnl });
     toast.success(`Trade outcome updated to ${newOutcome.toUpperCase()}`);

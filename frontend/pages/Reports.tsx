@@ -7,23 +7,34 @@ import {
 } from '@tabler/icons-react';
 import { useAppContext } from '../context/AppContext';
 import { stagger, fadeUp } from '../lib/animations';
-import { format, subDays, isAfter } from 'date-fns';
+import { format } from 'date-fns';
 import toast from 'react-hot-toast';
-import { getNetPnL, filterByAccount, getWinRate, getProfitFactor } from '../data/mockTrades';
+import { getNetPnL } from '../data/mockTrades';
+import { selectActiveTrades } from '../lib/selectActiveTrades';
+import { Account } from '../types';
 
 export const Reports = () => {
   const { trades, accounts, selectedAccountId } = useAppContext();
   const [isPrivacyEnabled, setIsPrivacyEnabled] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Filter trades by active account
-  const activeTrades = useMemo(() => {
-    return selectedAccountId ? trades.filter(t => t.accountId === selectedAccountId) : trades;
-  }, [trades, selectedAccountId]);
+  // Filter trades by active account (shared challenge-account rule)
+  const activeTrades = useMemo(
+    () => selectActiveTrades(trades, accounts, selectedAccountId),
+    [trades, accounts, selectedAccountId]
+  );
+
+  // Safe fallback so downstream calculations never read from `undefined`
+  // when there are no accounts (e.g. user deleted the last one).
+  const FALLBACK_ACCOUNT: Account = {
+    id: 'none', name: 'No Account', type: 'Personal', broker: 'N/A', platform: 'Other',
+    currency: 'USD', initialBalance: 0, isChallenge: false,
+    profitTarget: 10, maxDailyDrawdown: 5, maxTotalDrawdown: 10,
+  };
 
   const activeAccount = useMemo(() => {
-    if (!selectedAccountId || selectedAccountId === 'all') return accounts[0];
-    return accounts.find(a => a.id === selectedAccountId) || accounts[0];
+    if (!selectedAccountId || selectedAccountId === 'all') return accounts[0] ?? FALLBACK_ACCOUNT;
+    return accounts.find(a => a.id === selectedAccountId) || accounts[0] || FALLBACK_ACCOUNT;
   }, [accounts, selectedAccountId]);
 
   // 1. Prop Firm Audit & Compliance Pipeline
@@ -132,9 +143,19 @@ export const Reports = () => {
     }, 1500);
   };
 
+  if (accounts.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center h-full p-9 text-center">
+        <IconReportAnalytics size={40} className="text-text-3 mb-4" />
+        <h2 className="text-lg font-bold text-text-1 mb-1">No accounts yet</h2>
+        <p className="text-sm text-text-3 max-w-sm">Add a trading account to generate compliance reports and AI briefings.</p>
+      </div>
+    );
+  }
+
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="p-6 md:p-9 pb-20 max-w-[1200px] mx-auto">
-      
+
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>

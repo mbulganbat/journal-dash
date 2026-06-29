@@ -9,6 +9,7 @@ import { stagger, fadeUp } from '../lib/animations';
 import { format, isToday, isThisWeek, isThisMonth } from 'date-fns';
 import { useNavigate } from 'react-router-dom';
 import { ConfirmDialog } from '../components/modals/ConfirmDialog';
+import { selectActiveTrades } from '../lib/selectActiveTrades';
 import toast from 'react-hot-toast';
 import { Trade } from '../types';
 
@@ -86,7 +87,7 @@ const FilterDropdown = ({ label, value, options, onChange, icon: Icon, placehold
 };
 
 export const Journal = () => {
-  const { trades, setEditingTrade, setOpenNewTrade, deleteTrade, selectedAccountId } = useAppContext();
+  const { trades, accounts, setEditingTrade, setOpenNewTrade, deleteTrade, selectedAccountId } = useAppContext();
   const navigate = useNavigate();
 
   const [filterResult, setFilterResult] = useState<'all'|'wins'|'losses'>('all');
@@ -106,12 +107,8 @@ export const Journal = () => {
   ];
 
   const filteredTrades = useMemo(() => {
-    let r = trades;
-    
-    if (selectedAccountId && selectedAccountId !== 'all') {
-      r = r.filter(t => t.accountId === selectedAccountId);
-    }
-    
+    let r = selectActiveTrades(trades, accounts, selectedAccountId);
+
     if (filterResult === 'wins') r = r.filter(t => t.result === 'win');
     if (filterResult === 'losses') r = r.filter(t => t.result === 'loss');
     if (selectedSetup) r = r.filter(t => t.setup === selectedSetup);
@@ -137,7 +134,7 @@ export const Journal = () => {
     }
     
     return [...r].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [trades, selectedAccountId, filterResult, selectedSetup, selectedPair, selectedDateRange, searchQuery]);
+  }, [trades, accounts, selectedAccountId, filterResult, selectedSetup, selectedPair, selectedDateRange, searchQuery]);
 
   const resetFilters = () => {
     setFilterResult('all');

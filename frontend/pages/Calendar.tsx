@@ -30,6 +30,7 @@ import {
 } from 'date-fns';
 import { useAppContext } from '../context/AppContext';
 import { fadeUp, stagger } from '../lib/animations';
+import { derivePnl } from '../lib/assetSpecs';
 import { Account, Trade } from '../types';
 
 type OutcomeFilter = 'all' | 'win' | 'loss';
@@ -66,32 +67,12 @@ const outcomeFilters: { label: string; value: OutcomeFilter }[] = [
 
 const weekDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
-const getContractMultiplier = (symbol: string): number => {
-  const normalized = symbol.toUpperCase();
-  if (normalized.includes('XAU') || normalized.includes('GOLD')) return 100;
-  if (normalized.includes('JPY')) return 1000;
-  if (/^[A-Z]{6}$/.test(normalized)) return 100000;
-  return 10;
-};
-
+// Use the authoritative stored P&L (written on save / outcome change) so the
+// calendar agrees with every other screen. Fall back to deriving from prices
+// only if the stored value is missing/corrupt.
 const calculateTradePnl = (trade: Trade): number => {
-  const multiplier = getContractMultiplier(trade.pair ?? '');
-  const lotSize = Number.isFinite(trade.lotSize) ? trade.lotSize : 0;
-  const entry = Number.isFinite(trade.entry) ? trade.entry : 0;
-  const stopLoss = Number.isFinite(trade.sl) ? trade.sl : entry;
-  const takeProfit = Number.isFinite(trade.tp) ? trade.tp : entry;
-
-  if (trade.result === 'win') {
-    return Math.abs(takeProfit - entry) * lotSize * multiplier;
-  }
-
-  if (trade.result === 'loss') {
-    return -Math.abs(entry - stopLoss) * lotSize * multiplier;
-  }
-
-  if (trade.result === 'breakeven') return 0;
-
-  return Number.isFinite(trade.pnl) ? trade.pnl : 0;
+  if (Number.isFinite(trade.pnl)) return trade.pnl;
+  return derivePnl(trade);
 };
 
 const formatCurrency = (value: number): string => {
@@ -525,14 +506,11 @@ export const Calendar = () => {
                 { label: 'Active Trading Days', value: microStats.activeDays.toLocaleString(), icon: IconCalendar },
                 { label: 'Win Rate', value: `${microStats.winRate}%`, icon: IconTrendingUp },
                 { label: 'Profit Factor', value: microStats.profitFactor.toFixed(2), icon: IconActivity }
-              ] satisfies StatBadge[]).map(({ label, value, icon: Icon, privateValue }) => (
+              ] satisfies StatBadge[]).map(({ label, value, icon: Icon }) => (
                 <div key={label} className="bg-[#0C0C0E] border border-white/[0.06] rounded-[20px] p-4 min-w-0">
                   <Icon size={18} className="text-text-3 mb-3" />
                   <p className="text-[10px] uppercase tracking-[0.16em] text-text-3 font-bold truncate">{label}</p>
-                  <p
-                    className="text-lg font-extrabold text-text-1 mt-1 truncate"
-                    style={privateValue ? privacyStyle(privacyMode) : undefined}
-                  >
+                  <p className="text-lg font-extrabold text-text-1 mt-1 truncate">
                     {value}
                   </p>
                 </div>

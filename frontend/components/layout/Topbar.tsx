@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { IconUpload, IconPlus, IconChevronDown, IconWallet, IconCheck, IconSettings } from '@tabler/icons-react';
 import { useAppContext } from '../../context/AppContext';
 import { format } from 'date-fns';
-import { getNetPnL, filterByAccount } from '../../data/mockTrades';
+import { getNetPnL } from '../../data/mockTrades';
+import { selectActiveTrades } from '../../lib/selectActiveTrades';
 import { useNavigate } from 'react-router-dom';
 
 export const Topbar = () => {
@@ -15,7 +16,7 @@ export const Topbar = () => {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
   
-  const activeTrades = filterByAccount(trades, selectedAccountId);
+  const activeTrades = selectActiveTrades(trades, accounts, selectedAccountId);
   const netPnl = getNetPnL(activeTrades);
   const performanceHint = netPnl >= 0 ? "Up this month" : "Down this month";
 

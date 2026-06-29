@@ -14,11 +14,12 @@ import { useAppContext } from '../context/AppContext';
 import { stagger, fadeUp } from '../lib/animations';
 import { MetricCard, ProgressBar, TagPill, premiumHoverProps } from '../components/ui/Shared';
 import { TradingActivityHeatmap } from '../components/ui/TradingActivityHeatmap';
-import { 
-  getNetPnL, getWinRate, getProfitFactor, getExpectancy, getAvgRR, 
+import {
+  getNetPnL, getWinRate, getProfitFactor, getExpectancy, getAvgRR,
   getEquityCurve, filterByPeriod, groupBySession, groupBySetup,
   getAvgWin, getAvgLoss, getActiveDays
 } from '../data/mockTrades';
+import { selectActiveTrades } from '../lib/selectActiveTrades';
 
 interface TooltipProps {
   active?: boolean;
@@ -31,12 +32,11 @@ export const Dashboard = () => {
   const navigate = useNavigate();
   const [activePeriod, setActivePeriod] = useState<'1W'|'1M'|'3M'|'YTD'>('1M');
 
-  // Filter trades by active account
-  const activeTrades = useMemo(() => {
-    if (selectedAccountId) return trades.filter(t => t.accountId === selectedAccountId);
-    const standardAccountIds = new Set(accounts.filter(acc => !acc.isChallenge).map(acc => acc.id));
-    return trades.filter(t => standardAccountIds.has(t.accountId));
-  }, [trades, selectedAccountId, accounts]);
+  // Filter trades by active account (shared challenge-account rule)
+  const activeTrades = useMemo(
+    () => selectActiveTrades(trades, accounts, selectedAccountId),
+    [trades, selectedAccountId, accounts]
+  );
 
   // Calculate Initial Balance for Equity Curve
   const initialBalance = useMemo(() => {
