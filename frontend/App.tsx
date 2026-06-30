@@ -5,19 +5,19 @@ import { AppProvider } from './context/AppContext';
 import { Background } from './components/layout/Background';
 import { Sidebar } from './components/layout/Sidebar';
 import { Topbar } from './components/layout/Topbar';
-import { NewTradePanel } from './components/panels/NewTradePanel';
+import { NewTradePanel } from './features/trade-form/NewTradePanel';
 import { ImportModal } from './components/modals/ImportModal';
-import { ManageAccountsModal } from './components/modals/ManageAccountsModal';
+import { ManageAccountsModal } from './features/accounts/ManageAccountsModal';
 
 // Pages
-import { Dashboard } from './pages/Dashboard';
-import { Journal } from './pages/Journal';
+import { Dashboard } from './features/dashboard/Dashboard';
+import { Journal } from './features/journal/Journal';
 import { Trades } from './pages/Trades';
-import { Analytics } from './pages/Analytics';
-import { TradeDetail } from './pages/TradeDetail';
+import { Analytics } from './features/analytics/Analytics';
+import { TradeDetail } from './features/trade-detail/TradeDetail';
 import { Settings } from './pages/Settings';
-import { Reports } from './pages/Reports';
-import { Calendar } from './pages/Calendar';
+import { Reports } from './features/reports/Reports';
+import { Calendar } from './features/calendar/Calendar';
 
 // Placeholder pages for completeness
 const Placeholder = ({ title }: { title: string }) => (
@@ -32,7 +32,7 @@ export default function App() {
           <Background />
           <Sidebar />
           
-          <div className="ml-[224px] flex flex-col flex-1 min-h-screen relative z-10">
+          <div className="ml-[224px] flex flex-col flex-1 min-w-0 min-h-screen relative z-10">
             <Topbar />
             <main className="flex-1 overflow-y-auto">
               <Routes>
