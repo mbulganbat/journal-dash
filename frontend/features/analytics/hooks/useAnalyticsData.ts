@@ -1,16 +1,9 @@
 import { useMemo } from 'react';
-import { subDays, isAfter, getDay, getHours, addHours } from 'date-fns';
+import { subDays, isAfter, getDay, getHours } from 'date-fns';
 import { Trade, Account, AppSettings } from '../../../types';
 import { selectActiveTrades } from '../../../lib/selectActiveTrades';
+import { toZonedTime } from '../../../lib/timezone';
 import { PERIODS } from '../constants';
-
-// Helper to simulate timezone offset
-const getTimezoneOffset = (tz: string) => {
-  if (tz === 'EST') return -5;
-  if (tz === 'GMT') return 0;
-  if (tz === 'ULAT') return 8; // Ulaanbaatar
-  return 0; // UTC default
-};
 
 export const useAnalyticsData = (
   trades: Trade[],
@@ -276,11 +269,10 @@ export const useAnalyticsData = (
     let maxAbsPnl = 1;
 
     const hourStats = Array.from({ length: 24 }, () => ({ wins: 0, losses: 0, total: 0 }));
-    const tzOffset = getTimezoneOffset(settings.timezone);
 
     filteredTrades.forEach(t => {
-      // Timezone adjustment
-      const date = addHours(new Date(t.date), tzOffset);
+      // Bucket each trade by the hour-of-day in the selected timezone.
+      const date = toZonedTime(new Date(t.date), settings.timezone);
       const day = getDay(date); // 0=Sun, 1=Mon...
       const hour = getHours(date);
 

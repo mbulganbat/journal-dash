@@ -69,29 +69,3 @@ export const CustomEquityTooltip = ({ active, payload, label, isPrivacyEnabled }
   }
   return null;
 };
-
-export const RadarTooltip = ({ active, payload }: any) => {
-  if (active && payload && payload.length) {
-    const data = payload[0].payload;
-    return (
-      <div className="bg-[#0C0C0E]/95 backdrop-blur-md border border-white/[0.08] rounded-xl px-4 py-3 shadow-2xl z-50 min-w-[180px]">
-        <p className="text-text-1 font-bold text-[14px] mb-3 border-b border-white/[0.06] pb-2 uppercase tracking-wider">{data.subject}</p>
-        <div className="flex justify-between items-center gap-4 mb-2">
-          <span className="text-[11px] text-text-3 uppercase tracking-wide font-semibold">Win Rate</span>
-          <span className="text-[13px] font-bold text-[#00FFB2]">{data.A.toFixed(1)}%</span>
-        </div>
-        <div className="flex justify-between items-center gap-4 mb-2">
-          <span className="text-[11px] text-text-3 uppercase tracking-wide font-semibold">Profit Factor</span>
-          <span className="text-[13px] font-bold text-[#B259FF]">{data.rawPF.toFixed(2)}</span>
-        </div>
-        <div className="flex justify-between items-center gap-4">
-          <span className="text-[11px] text-text-3 uppercase tracking-wide font-semibold">Net P&L</span>
-          <span className={`text-[13px] font-extrabold ${data.pnl >= 0 ? 'text-[#00FFB2]' : 'text-[#FF5A5A]'}`}>
-            {data.pnl >= 0 ? '+' : '-'}${Math.abs(data.pnl).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}
-          </span>
-        </div>
-      </div>
-    );
-  }
-  return null;
-};

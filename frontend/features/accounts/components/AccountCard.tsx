@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { IconBuildingBank, IconEdit, IconTrash, IconTrophy } from '@tabler/icons-react';
-import toast from 'react-hot-toast';
 import { getFundedProgress, getNetPnL, filterByAccount, getWinRate } from '../../../data/mockTrades';
 import { ProgressBar } from '../../../components/ui/Shared';
 import { Account, Trade } from '../../../types';
@@ -9,10 +8,11 @@ interface Props {
   acc: Account;
   trades: Trade[];
   onSelect: () => void;
+  onEdit: () => void;
   onDelete: () => void;
 }
 
-export const AccountCard = ({ acc, trades, onSelect, onDelete }: Props) => {
+export const AccountCard = ({ acc, trades, onSelect, onEdit, onDelete }: Props) => {
   const accTrades = filterByAccount(trades, acc.id);
   const netPnl = getNetPnL(accTrades);
   const balance = acc.initialBalance + netPnl;
@@ -39,7 +39,7 @@ export const AccountCard = ({ acc, trades, onSelect, onDelete }: Props) => {
         </div>
         <div className="flex gap-1">
           <button onClick={onSelect} className="px-3 py-1.5 bg-white/[0.04] hover:bg-em/10 hover:text-em rounded-lg text-xs font-medium transition-colors mr-1">Select</button>
-          <button onClick={() => toast("Edit coming soon")} className="p-1.5 text-text-3 hover:text-text-1 transition-colors rounded-lg hover:bg-white/[0.04]"><IconEdit size={16} /></button>
+          <button onClick={onEdit} className="p-1.5 text-text-3 hover:text-text-1 transition-colors rounded-lg hover:bg-white/[0.04]"><IconEdit size={16} /></button>
           <button onClick={onDelete} className="p-1.5 text-text-3 hover:text-danger transition-colors rounded-lg hover:bg-white/[0.04]"><IconTrash size={16} /></button>
         </div>
       </div>

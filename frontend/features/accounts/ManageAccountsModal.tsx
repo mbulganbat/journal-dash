@@ -21,6 +21,23 @@ export const ManageAccountsModal = () => {
   const handleClose = () => {
     setOpenManageAccounts(false);
     setShowForm(false);
+    form.resetForm();
+  };
+
+  const handleToggleForm = () => {
+    if (showForm) {
+      setShowForm(false);
+    } else {
+      form.resetForm();
+      setShowForm(true);
+    }
+  };
+
+  const handleEditAccount = (id: string) => {
+    const acc = accounts.find(a => a.id === id);
+    if (!acc) return;
+    form.loadAccount(acc);
+    setShowForm(true);
   };
 
   const handleSelectAccount = (id: string) => {
@@ -47,7 +64,7 @@ export const ManageAccountsModal = () => {
                 <h2 className="text-[20px] font-bold text-text-1">Manage Accounts</h2>
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => setShowForm(!showForm)}
+                    onClick={handleToggleForm}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] text-sm font-medium text-text-1 transition-colors"
                   >
                     <IconPlus size={16} /> New Account
@@ -67,7 +84,7 @@ export const ManageAccountsModal = () => {
                       exit={{ height: 0, opacity: 0, marginBottom: 0 }}
                       className="overflow-hidden"
                     >
-                      <AccountForm form={form} onCancel={() => setShowForm(false)} />
+                      <AccountForm form={form} onCancel={() => { setShowForm(false); form.resetForm(); }} />
                     </motion.div>
                   )}
                 </AnimatePresence>
@@ -79,6 +96,7 @@ export const ManageAccountsModal = () => {
                       acc={acc}
                       trades={trades}
                       onSelect={() => handleSelectAccount(acc.id)}
+                      onEdit={() => handleEditAccount(acc.id)}
                       onDelete={() => setConfirmDeleteId(acc.id)}
                     />
                   ))}

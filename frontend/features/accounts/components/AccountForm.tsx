@@ -9,6 +9,7 @@ interface Props {
 
 export const AccountForm = ({ form, onCancel }: Props) => {
   const {
+    editingId,
     name, setName,
     type, setType,
     broker, setBroker,
@@ -24,7 +25,7 @@ export const AccountForm = ({ form, onCancel }: Props) => {
 
   return (
     <div className="bg-bg-3 border border-white/[0.06] rounded-xl p-5">
-      <h3 className="text-[14px] font-bold text-text-1 mb-4">Add New Account</h3>
+      <h3 className="text-[14px] font-bold text-text-1 mb-4">{editingId ? 'Edit Account' : 'Add New Account'}</h3>
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <label className="block text-[10px] uppercase text-text-3 tracking-wide mb-1.5">Account Name</label>
@@ -97,7 +98,7 @@ export const AccountForm = ({ form, onCancel }: Props) => {
 
       <div className="flex justify-end gap-3">
         <button onClick={onCancel} className="px-4 py-2 rounded-xl text-sm font-medium text-text-2 hover:bg-white/[0.04]">Cancel</button>
-        <button onClick={handleAddAccount} className="px-6 py-2 rounded-xl text-sm font-bold text-black bg-em hover:bg-em-2 transition-colors">Save Account</button>
+        <button onClick={handleAddAccount} className="px-6 py-2 rounded-xl text-sm font-bold text-black bg-em hover:bg-em-2 transition-colors">{editingId ? 'Update Account' : 'Save Account'}</button>
       </div>
     </div>
   );

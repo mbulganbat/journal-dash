@@ -67,13 +67,23 @@ function generateMockTrades(): Trade[] {
     ...Array(3).fill('breakeven')
   ];
 
-  // Deterministic shuffle
+  // Seeded PRNG (mulberry32) — gives a stable sequence across reloads.
+  let prngState = 0x9e3779b9;
+  const rand = () => {
+    prngState |= 0;
+    prngState = (prngState + 0x6d2b79f5) | 0;
+    let t = Math.imul(prngState ^ (prngState >>> 15), 1 | prngState);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+
+  // Deterministic Fisher-Yates shuffle (in place, stable across reloads).
   const shuffle = (arr: any[]) => {
-    let seed = 1;
-    return arr.sort(() => {
-      const x = Math.sin(seed++) * 10000;
-      return (x - Math.floor(x)) - 0.5;
-    });
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(rand() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
   };
   
   shuffle(sessions);
@@ -113,7 +123,7 @@ function generateMockTrades(): Trade[] {
     const date = subDays(now, daysAgo).toISOString();
 
     trades.push({
-      id: `trd_${i}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `trd_${i}_${Math.floor(rand() * 1e9).toString(36)}`,
       accountId: i < 35 ? 'acc-1' : 'acc-2',
       pair: pairs[i],
       date,
@@ -157,13 +167,36 @@ export const getFundedProgress = (account: Account, trades: Trade[]) => {
   const accTrades = filterByAccount(trades, account.id);
   const netPnl = getNetPnL(accTrades);
   const profitPct = (netPnl / account.initialBalance) * 100;
-  
-  // Mocking drawdowns for UI demonstration
-  const dailyDrawdownPct = 2.1; 
-  const totalDrawdownPct = 3.8;
-  
-  const uniqueDays = new Set(accTrades.map(t => t.date.split('T')[0]));
-  const daysTraded = uniqueDays.size;
+
+  // Real drawdowns derived from the account equity curve (chronological).
+  const sorted = [...accTrades].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  let equity = account.initialBalance;
+  let peak = account.initialBalance;
+  let totalDrawdownPct = 0; // worst peak-to-trough drawdown over the whole curve
+  const dailyPnl = new Map<string, number>(); // day -> net pnl
+
+  sorted.forEach(t => {
+    equity += t.pnl;
+    if (equity > peak) peak = equity;
+    const ddPct = peak > 0 ? ((peak - equity) / peak) * 100 : 0;
+    if (ddPct > totalDrawdownPct) totalDrawdownPct = ddPct;
+
+    const day = t.date.split('T')[0];
+    dailyPnl.set(day, (dailyPnl.get(day) || 0) + t.pnl);
+  });
+
+  // Daily drawdown: worst single-day loss relative to the balance at that day's start.
+  let dailyDrawdownPct = 0;
+  let dayStartEquity = account.initialBalance;
+  [...dailyPnl.keys()].sort().forEach(day => {
+    const dayPnl = dailyPnl.get(day)!;
+    const lossPct = dayStartEquity > 0 ? (Math.max(0, -dayPnl) / dayStartEquity) * 100 : 0;
+    if (lossPct > dailyDrawdownPct) dailyDrawdownPct = lossPct;
+    dayStartEquity += dayPnl;
+  });
+
+  const daysTraded = dailyPnl.size;
 
   let status: 'On Track' | 'At Risk' | 'Passed' | 'Blown' = 'On Track';
   

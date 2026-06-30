@@ -5,6 +5,7 @@ import { stagger, fadeUp } from '../lib/animations';
 import { Toggle } from '../components/ui/Shared';
 import toast from 'react-hot-toast';
 import { IconCheck } from '@tabler/icons-react';
+import { TIMEZONES } from '../lib/timezone';
 
 const SECTIONS = ['Account', 'Notifications', 'Trading Prefs', 'Subscription'];
 
@@ -15,11 +16,12 @@ export const Settings = () => {
   // Local state for forms
   const [userName, setUserName] = useState(settings.userName || 'Alex');
   const [currency, setCurrency] = useState(settings.currency || 'USD');
-  
+  const [timezone, setTimezone] = useState(settings.timezone || 'UTC');
+
   const [risk, setRisk] = useState(settings.tradingPrefs?.defaultRisk || 1);
 
   const handleSaveAccount = () => {
-    updateSettings({ userName, currency });
+    updateSettings({ userName, currency, timezone });
     toast.success("Account settings saved");
   };
 
@@ -82,6 +84,18 @@ export const Settings = () => {
                       <option value="USD">USD ($)</option>
                       <option value="EUR">EUR (€)</option>
                       <option value="GBP">GBP (£)</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] uppercase text-text-3 tracking-wide mb-2">Timezone</label>
+                    <select
+                      value={timezone} onChange={e => setTimezone(e.target.value)}
+                      className="w-full bg-bg-3 border border-white/[0.08] rounded-xl px-4 py-2.5 text-sm text-text-1 focus:outline-none focus:border-em/50"
+                    >
+                      {TIMEZONES.map(tz => (
+                        <option key={tz.value} value={tz.value}>{tz.label}</option>
+                      ))}
                     </select>
                   </div>
 

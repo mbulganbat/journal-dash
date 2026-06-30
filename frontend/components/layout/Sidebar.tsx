@@ -7,7 +7,8 @@ import {
   IconReportAnalytics, IconTarget, IconSettings, IconChevronRight 
 } from '@tabler/icons-react';
 import { useAppContext } from '../../context/AppContext';
-import { format, addHours } from 'date-fns';
+import { format } from 'date-fns';
+import { toZonedTime } from '../../lib/timezone';
 
 const NAV_SECTIONS = [
   {
@@ -35,14 +36,6 @@ const NAV_SECTIONS = [
   }
 ];
 
-// Helper to simulate timezone offset
-const getTimezoneOffset = (tz: string) => {
-  if (tz === 'EST') return -5;
-  if (tz === 'GMT') return 0;
-  if (tz === 'ULAT') return 8; // Ulaanbaatar
-  return 0; // UTC default
-};
-
 export const Sidebar = () => {
   const location = useLocation();
   const navigate = useNavigate();
@@ -54,9 +47,8 @@ export const Sidebar = () => {
     return () => clearInterval(timer);
   }, []);
 
-  const tzOffset = getTimezoneOffset(settings.timezone);
-  const localTime = addHours(time, tzOffset);
-  
+  const localTime = toZonedTime(time, settings.timezone);
+
   // Simple mock logic for FX market open (Mon-Fri)
   const day = localTime.getDay();
   const isMarketOpen = day >= 1 && day <= 5;
