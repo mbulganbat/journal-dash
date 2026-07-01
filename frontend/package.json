@@ -10,14 +10,15 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.61.8",
+    "@tabler/icons-react": "latest",
+    "date-fns": "latest",
+    "framer-motion": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "react-router-dom": "latest",
-    "framer-motion": "latest",
-    "recharts": "latest",
-    "@tabler/icons-react": "latest",
     "react-hot-toast": "latest",
-    "date-fns": "latest"
+    "react-router-dom": "latest",
+    "recharts": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",

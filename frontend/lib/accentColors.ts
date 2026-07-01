@@ -1,6 +1,6 @@
 import { AccentColor } from '../types';
 
-interface ColorSpec {
+export interface ColorSpec {
   label: string;
   hex: string;
   text: string;

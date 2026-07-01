@@ -6,6 +6,7 @@ import {
   IconChartHistogram, IconTemplate, IconCalendarStats, 
   IconReportAnalytics, IconTarget, IconSettings, IconChevronRight 
 } from '@tabler/icons-react';
+import { UserButton } from '@clerk/clerk-react';
 import { useAppContext } from '../../context/AppContext';
 import { format } from 'date-fns';
 import { toZonedTime } from '../../lib/timezone';
@@ -103,24 +104,27 @@ export const Sidebar = () => {
         ))}
       </div>
 
-      <div
-        className="mt-auto p-3 border-t border-white/5 pt-3 px-3 pb-4 flex items-center gap-3 cursor-pointer hover:bg-white/[0.02] transition-colors"
-        onClick={() => navigate('/settings')}
-      >
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-em to-em-3 flex items-center justify-center text-black text-xs font-bold overflow-hidden shrink-0">
-          {settings.avatarUrl ? (
-            <img src={settings.avatarUrl} alt={settings.userName} className="w-full h-full object-cover" />
-          ) : (
-            settings.userName.charAt(0).toUpperCase()
-          )}
+      <div className="mt-auto p-3 border-t border-white/5 pt-3 px-3 pb-4 flex items-center gap-3">
+        <div
+          className="flex items-center gap-3 flex-1 min-w-0 cursor-pointer hover:bg-white/[0.02] rounded-xl p-1 -m-1 transition-colors"
+          onClick={() => navigate('/settings')}
+        >
+          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-em to-em-3 flex items-center justify-center text-black text-xs font-bold overflow-hidden shrink-0">
+            {settings.avatarUrl ? (
+              <img src={settings.avatarUrl} alt={settings.userName} className="w-full h-full object-cover" />
+            ) : (
+              settings.userName.charAt(0).toUpperCase()
+            )}
+          </div>
+          <div className="flex flex-col min-w-0">
+            <span className="text-[13px] font-semibold text-text-1 truncate">{settings.userName}</span>
+            <span className={`text-[11px] ${settings.plan === 'pro' ? 'text-em' : 'text-text-3'}`}>
+              {settings.plan === 'pro' ? 'Pro Trader' : 'Free Trader'}
+            </span>
+          </div>
+          <IconChevronRight size={16} className="text-text-3 ml-auto shrink-0" />
         </div>
-        <div className="flex flex-col min-w-0">
-          <span className="text-[13px] font-semibold text-text-1 truncate">{settings.userName}</span>
-          <span className={`text-[11px] ${settings.plan === 'pro' ? 'text-em' : 'text-text-3'}`}>
-            {settings.plan === 'pro' ? 'Pro Trader' : 'Free Trader'}
-          </span>
-        </div>
-        <IconChevronRight size={16} className="text-text-3 ml-auto shrink-0" />
+        <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: 'w-8 h-8' } }} />
       </div>
     </div>
   );
