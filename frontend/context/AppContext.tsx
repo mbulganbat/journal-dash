@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Trade, AppSettings, AppContextValue, Account } from '../types';
-import { mockTrades, mockAccounts } from '../data/mockTrades';
+import { Trade, AppSettings, AppContextValue, Account, Setup, Goal } from '../types';
+import { mockTrades, mockAccounts, mockSetups, mockGoals } from '../data/mockTrades';
 
 const defaultSettings: AppSettings = {
   userName: "Alex",
   currency: "USD",
   timezone: "UTC",
+  plan: "free",
   notifications: {
     email: true,
     push: false,
@@ -57,6 +58,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     loadFromStorage<Trade[]>('lumex_trades', mockTrades, Array.isArray)
   );
 
+  const [setups, setSetups] = useState<Setup[]>(() =>
+    loadFromStorage<Setup[]>('lumex_setups', mockSetups, Array.isArray)
+  );
+
+  const [goals, setGoals] = useState<Goal[]>(() =>
+    loadFromStorage<Goal[]>('lumex_goals', mockGoals, Array.isArray)
+  );
+
   const [settings, setSettings] = useState<AppSettings>(() => {
     // Merge stored settings over defaults so newly-added fields are never undefined.
     const stored = loadFromStorage<Partial<AppSettings>>(
@@ -91,6 +100,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   }, [trades]);
 
   useEffect(() => {
+    localStorage.setItem('lumex_setups', JSON.stringify(setups));
+  }, [setups]);
+
+  useEffect(() => {
+    localStorage.setItem('lumex_goals', JSON.stringify(goals));
+  }, [goals]);
+
+  useEffect(() => {
     localStorage.setItem('lumex_settings', JSON.stringify(settings));
   }, [settings]);
 
@@ -111,6 +128,32 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setAccounts(prev => prev.filter(a => a.id !== id));
     setTrades(prev => prev.filter(t => t.accountId !== id));
     if (selectedAccountId === id) setSelectedAccountId(null);
+  };
+
+  const addSetup = (setupData: Omit<Setup, 'id'>) => {
+    const newSetup: Setup = { ...setupData, id: crypto.randomUUID() };
+    setSetups(prev => [...prev, newSetup]);
+  };
+
+  const updateSetup = (id: string, updates: Partial<Setup>) => {
+    setSetups(prev => prev.map(s => s.id === id ? { ...s, ...updates } : s));
+  };
+
+  const deleteSetup = (id: string) => {
+    setSetups(prev => prev.filter(s => s.id !== id));
+  };
+
+  const addGoal = (goalData: Omit<Goal, 'id' | 'createdAt'>) => {
+    const newGoal: Goal = { ...goalData, id: crypto.randomUUID(), createdAt: new Date().toISOString() };
+    setGoals(prev => [...prev, newGoal]);
+  };
+
+  const updateGoal = (id: string, updates: Partial<Goal>) => {
+    setGoals(prev => prev.map(g => g.id === id ? { ...g, ...updates } : g));
+  };
+
+  const deleteGoal = (id: string) => {
+    setGoals(prev => prev.filter(g => g.id !== id));
   };
 
   const addTrade = (tradeData: Omit<Trade, 'id'>) => {
@@ -147,6 +190,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       addAccount,
       updateAccount,
       deleteAccount,
+      setups,
+      addSetup,
+      updateSetup,
+      deleteSetup,
+      goals,
+      addGoal,
+      updateGoal,
+      deleteGoal,
       openManageAccounts,
       setOpenManageAccounts,
       openNewTrade,

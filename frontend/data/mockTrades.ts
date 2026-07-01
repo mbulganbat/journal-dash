@@ -1,5 +1,5 @@
-import { Trade, Account, HeatmapDay } from '../types';
-import { subDays, startOfYear, subMonths, format, parseISO, startOfWeek, isSameDay, eachDayOfInterval } from 'date-fns';
+import { Trade, Account, HeatmapDay, Setup, Goal } from '../types';
+import { subDays, startOfYear, subMonths, addMonths, format, parseISO, startOfWeek, isSameDay, eachDayOfInterval } from 'date-fns';
 
 export const mockAccounts: Account[] = [
   {
@@ -24,6 +24,117 @@ export const mockAccounts: Account[] = [
     currency: 'USD',
     initialBalance: 10000,
     isChallenge: false
+  }
+];
+
+// Default playbook seeded on first load. Names match the setup labels used
+// by generateMockTrades() below so stats aren't empty out of the box.
+export const mockSetups: Setup[] = [
+  {
+    id: 'setup-bms-fvg',
+    name: 'BMS+FVG',
+    description: 'Break of market structure confirmed by a fair value gap retracement entry.',
+    rules: ['Clear break of structure on HTF', 'FVG formed after the break', 'Entry on FVG retest', 'Confirmation candle close'],
+    color: 'em',
+    icon: 'IconChartCandle'
+  },
+  {
+    id: 'setup-order-block',
+    name: 'Order Block',
+    description: 'Institutional order block reaction entries at key supply/demand zones.',
+    rules: ['Untested order block', 'Aligned with HTF bias', 'Liquidity swept before entry', 'Tight invalidation below/above block'],
+    color: 'blue',
+    icon: 'IconTarget'
+  },
+  {
+    id: 'setup-cisd',
+    name: 'CISD',
+    description: 'Change in state of delivery — a shift from bearish to bullish delivery, or vice versa.',
+    rules: ['Liquidity sweep first', 'Delivery shift confirmed', 'Entry on the retracement', 'Risk defined at the shift point'],
+    color: 'purple',
+    icon: 'IconWaveSquare'
+  },
+  {
+    id: 'setup-liquidity',
+    name: 'Liquidity',
+    description: 'Fade or continuation entries built around swept liquidity pools.',
+    rules: ['Obvious liquidity pool (EQH/EQL)', 'Sweep with rejection wick', 'Momentum shift after the sweep', 'Confirmation on LTF'],
+    color: 'warning',
+    icon: 'IconCrosshair'
+  },
+  {
+    id: 'setup-other',
+    name: 'Other',
+    description: "Discretionary setups that don't fit a defined playbook rule set yet.",
+    rules: ['Document the idea in the notes', 'Review after the trade closes'],
+    color: 'blue',
+    icon: 'IconSparkles'
+  }
+];
+
+// Default goals seeded on first load. Deadlines are relative to "now" so they
+// stay meaningful however long after this file first ships.
+const seededAt = new Date().toISOString();
+export const mockGoals: Goal[] = [
+  {
+    id: 'goal-net-profit',
+    title: 'Reach $50,000 Net Profit',
+    metric: 'netPnl',
+    target: 50000,
+    current: 0,
+    unit: '$',
+    deadline: addMonths(new Date(), 5).toISOString(),
+    createdAt: seededAt,
+    color: 'em',
+    icon: 'IconCoin'
+  },
+  {
+    id: 'goal-win-rate',
+    title: 'Hit 75% Win Rate',
+    metric: 'winRate',
+    target: 75,
+    current: 0,
+    unit: '%',
+    deadline: addMonths(new Date(), 2).toISOString(),
+    createdAt: seededAt,
+    color: 'blue',
+    icon: 'IconTarget'
+  },
+  {
+    id: 'goal-total-trades',
+    title: 'Log 100 Trades',
+    metric: 'totalTrades',
+    target: 100,
+    current: 0,
+    unit: 'trades',
+    deadline: addMonths(new Date(), 4).toISOString(),
+    createdAt: seededAt,
+    color: 'purple',
+    icon: 'IconChartLine'
+  },
+  {
+    id: 'goal-profit-factor',
+    title: 'Maintain 3.0+ Profit Factor',
+    metric: 'profitFactor',
+    target: 3,
+    current: 0,
+    unit: '×',
+    deadline: addMonths(new Date(), 3).toISOString(),
+    createdAt: seededAt,
+    color: 'warning',
+    icon: 'IconTrophy'
+  },
+  {
+    id: 'goal-backtesting',
+    title: 'Backtest 20 Hours',
+    metric: 'manual',
+    target: 20,
+    current: 6,
+    unit: 'hrs',
+    deadline: addMonths(new Date(), 1).toISOString(),
+    createdAt: seededAt,
+    color: 'blue',
+    icon: 'IconRocket'
   }
 ];
 

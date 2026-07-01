@@ -61,7 +61,9 @@ export const Sidebar = () => {
           <IconBolt size={18} className="text-black" />
         </div>
         <span className="text-[16px] font-bold text-text-1 tracking-tight">Lumex</span>
-        <span className="text-[9px] font-bold text-em bg-em/10 border border-em/30 rounded-full px-1.5 py-0.5 ml-auto">PRO</span>
+        {settings.plan === 'pro' && (
+          <span className="text-[9px] font-bold text-em bg-em/10 border border-em/30 rounded-full px-1.5 py-0.5 ml-auto">PRO</span>
+        )}
       </div>
 
       <div className={`mx-3 my-2 px-3 py-2 rounded-xl border flex items-center gap-2 ${isMarketOpen ? 'bg-em/[0.03] border-em/10' : 'bg-white/[0.02] border-white/[0.05]'}`}>
@@ -101,18 +103,24 @@ export const Sidebar = () => {
         ))}
       </div>
 
-      <div 
+      <div
         className="mt-auto p-3 border-t border-white/5 pt-3 px-3 pb-4 flex items-center gap-3 cursor-pointer hover:bg-white/[0.02] transition-colors"
         onClick={() => navigate('/settings')}
       >
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-em to-em-3 flex items-center justify-center text-black text-xs font-bold">
-          {settings.userName.charAt(0).toUpperCase()}
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-em to-em-3 flex items-center justify-center text-black text-xs font-bold overflow-hidden shrink-0">
+          {settings.avatarUrl ? (
+            <img src={settings.avatarUrl} alt={settings.userName} className="w-full h-full object-cover" />
+          ) : (
+            settings.userName.charAt(0).toUpperCase()
+          )}
         </div>
-        <div className="flex flex-col">
-          <span className="text-[13px] font-semibold text-text-1">{settings.userName}</span>
-          <span className="text-[11px] text-em">Pro Trader</span>
+        <div className="flex flex-col min-w-0">
+          <span className="text-[13px] font-semibold text-text-1 truncate">{settings.userName}</span>
+          <span className={`text-[11px] ${settings.plan === 'pro' ? 'text-em' : 'text-text-3'}`}>
+            {settings.plan === 'pro' ? 'Pro Trader' : 'Free Trader'}
+          </span>
         </div>
-        <IconChevronRight size={16} className="text-text-3 ml-auto" />
+        <IconChevronRight size={16} className="text-text-3 ml-auto shrink-0" />
       </div>
     </div>
   );

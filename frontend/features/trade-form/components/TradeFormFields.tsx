@@ -2,9 +2,9 @@ import { motion } from 'framer-motion';
 import {
   IconWallet, IconTrendingUp, IconTrendingDown, IconCheck, IconUpload, IconLoader2
 } from '@tabler/icons-react';
-import { CustomDropdown } from './CustomDropdown';
-import { CustomDatePicker } from './CustomDatePicker';
-import { CHECKLIST_ITEMS, MISTAKES_LIST, SYMBOL_OPTIONS } from '../constants';
+import { CustomDropdown } from '../../../components/ui/Dropdown';
+import { CustomDatePicker } from '../../../components/ui/DatePicker';
+import { MISTAKES_LIST, SYMBOL_OPTIONS } from '../constants';
 import { TradeFormState } from '../hooks/useTradeForm';
 
 export const TradeFormFields = ({ form }: { form: TradeFormState }) => {
@@ -18,9 +18,9 @@ export const TradeFormFields = ({ form }: { form: TradeFormState }) => {
     date, setDate,
     session, setSession, sessionOptions,
     lotSize, setLotSize,
-    setup, setSetup, setupOptions,
+    setup, handleSetupChange, setupOptions,
     emotion, setEmotion, emotionOptions,
-    checklist, toggleChecklist, checklistScore,
+    checklist, toggleChecklist, checklistScore, checklistItems,
     mistakes, toggleMistake,
     screenshot, setScreenshot, isDragging, fileInputRef,
     handleDragOver, handleDragLeave, handleDrop, handleFileInput,
@@ -150,15 +150,25 @@ export const TradeFormFields = ({ form }: { form: TradeFormState }) => {
 
         {/* Strategy & Emotion */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="grid grid-cols-2 gap-4">
-          <CustomDropdown label="Strategy" value={setup} options={setupOptions} onChange={setSetup} />
+          <CustomDropdown label="Strategy" value={setup} options={setupOptions} onChange={handleSetupChange} />
           <CustomDropdown label="Emotion" value={emotion} options={emotionOptions} onChange={setEmotion} />
         </motion.div>
 
-        {/* Checklist */}
+        {/* Checklist — the selected Setup's own entry criteria */}
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}>
-          <label className="block text-[10px] uppercase text-text-3 tracking-wide mb-2">Setup Checklist</label>
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-[10px] uppercase text-text-3 tracking-wide">Setup Checklist</label>
+            {checklistItems.length > 0 && (
+              <span className="text-[10px] text-text-3">{setup}</span>
+            )}
+          </div>
           <div className="flex flex-col gap-2 bg-[#16161A] border border-white/[0.06] rounded-xl p-4">
-            {CHECKLIST_ITEMS.map(item => {
+            {checklistItems.length === 0 && (
+              <p className="text-[12px] text-text-3 italic">
+                No entry criteria defined for "{setup}" yet — add some from the Setups page.
+              </p>
+            )}
+            {checklistItems.map(item => {
               const isChecked = checklist.includes(item);
               return (
                 <div
@@ -177,14 +187,16 @@ export const TradeFormFields = ({ form }: { form: TradeFormState }) => {
             })}
 
             {/* Checklist Score Indicator */}
-            <div className="mt-3 pt-3 border-t border-white/[0.06] flex justify-between items-center">
-              <span className="text-[11px] text-text-3 uppercase tracking-wide font-semibold">Checklist Score</span>
-              <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${
-                checklistScore >= 80 ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'
-              }`}>
-                {checklistScore}%
-              </span>
-            </div>
+            {checklistItems.length > 0 && (
+              <div className="mt-3 pt-3 border-t border-white/[0.06] flex justify-between items-center">
+                <span className="text-[11px] text-text-3 uppercase tracking-wide font-semibold">Checklist Score</span>
+                <span className={`px-2 py-0.5 rounded-md text-[11px] font-bold border ${
+                  checklistScore >= 80 ? 'bg-success/10 text-success border-success/20' : 'bg-warning/10 text-warning border-warning/20'
+                }`}>
+                  {checklistScore}%
+                </span>
+              </div>
+            )}
           </div>
         </motion.div>
 

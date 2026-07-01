@@ -17,6 +17,7 @@ export const ASSET_SPECS: Record<string, AssetSpec> = {
   USOIL: { multiplier: 1000, pipDecimal: 2 }, // Crude oil
   NAS100: { multiplier: 1, pipDecimal: 1 },
   SPX500: { multiplier: 1, pipDecimal: 1 },
+  BTCUSD: { multiplier: 1, pipDecimal: 0 }, // Bitcoin: 1 lot = 1 BTC, $1 move on 1 lot = $1, 1 pip = $1
 };
 
 // Resolve a spec for any symbol, using sensible heuristics for unknown symbols
@@ -26,6 +27,7 @@ export const getAssetSpec = (symbol: string | undefined): AssetSpec => {
   const normalized = symbol.toUpperCase();
   if (ASSET_SPECS[normalized]) return ASSET_SPECS[normalized];
   if (normalized.includes('XAU') || normalized.includes('GOLD')) return { multiplier: 100, pipDecimal: 1 };
+  if (normalized.includes('BTC') || normalized.includes('ETH')) return { multiplier: 1, pipDecimal: 0 };
   if (normalized.includes('JPY')) return { multiplier: 1000, pipDecimal: 2 };
   if (/^[A-Z]{6}$/.test(normalized)) return { multiplier: 100000, pipDecimal: 4 };
   return { multiplier: 10, pipDecimal: 4 };

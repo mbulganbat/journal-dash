@@ -36,10 +36,14 @@ export interface Trade {
   screenshotUrl?: string | null;
 }
 
+export type PlanTier = 'free' | 'pro';
+
 export interface AppSettings {
   userName: string;
+  avatarUrl?: string; // base64 data URL, uploaded from Settings > Account
   currency: string;
   timezone: string;
+  plan: PlanTier;
   notifications: {
     email: boolean;
     push: boolean;
@@ -69,6 +73,16 @@ export interface AppContextValue {
   updateAccount: (id: string, updates: Partial<Account>) => void;
   deleteAccount: (id: string) => void;
 
+  setups: Setup[];
+  addSetup: (setup: Omit<Setup, 'id'>) => void;
+  updateSetup: (id: string, updates: Partial<Setup>) => void;
+  deleteSetup: (id: string) => void;
+
+  goals: Goal[];
+  addGoal: (goal: Omit<Goal, 'id' | 'createdAt'>) => void;
+  updateGoal: (id: string, updates: Partial<Goal>) => void;
+  deleteGoal: (id: string) => void;
+
   openManageAccounts: boolean;
   setOpenManageAccounts: (v: boolean) => void;
 
@@ -80,23 +94,34 @@ export interface AppContextValue {
   setEditingTrade: (t: Trade | null) => void;
 }
 
+// Shared user-pickable accent color for visual identity (Setups, Goals, ...).
+export type AccentColor = 'em' | 'warning' | 'purple' | 'blue';
+
+// A goal's progress is either tracked automatically from real trade/account
+// data (every metric except 'manual'), or logged by hand on the card.
+export type GoalMetric = 'manual' | 'netPnl' | 'winRate' | 'totalTrades' | 'profitFactor' | 'accountBalance' | 'avgRR';
+
 export interface Goal {
   id: string;
   title: string;
+  metric: GoalMetric;
   target: number;
-  current: number;
+  current: number; // manual progress; ignored (recomputed live) for non-manual metrics
   unit: string;
-  deadline: string;
-  color: 'em' | 'warning' | 'danger';
-  iconName: string;
+  deadline: string; // ISO date
+  createdAt: string; // ISO date, auto-set on creation — used to gauge pace vs deadline
+  color: AccentColor;
+  icon: string;
+  setupId?: string; // optional: scope the metric to trades tagged with this Setup only
 }
 
-export interface PlaybookRule {
+export interface Setup {
   id: string;
-  category: string;
-  title: string;
-  content: string;
-  followed: boolean;
+  name: string;
+  description: string;
+  rules: string[]; // entry criteria checklist for the playbook
+  color: AccentColor;
+  icon: string; // key into SETUP_ICONS
 }
 
 export interface HeatmapDay {

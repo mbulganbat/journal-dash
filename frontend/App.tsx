@@ -15,14 +15,11 @@ import { Journal } from './features/journal/Journal';
 import { Trades } from './pages/Trades';
 import { Analytics } from './features/analytics/Analytics';
 import { TradeDetail } from './features/trade-detail/TradeDetail';
-import { Settings } from './pages/Settings';
+import { Settings } from './features/settings/Settings';
 import { Reports } from './features/reports/Reports';
 import { Calendar } from './features/calendar/Calendar';
-
-// Placeholder pages for completeness
-const Placeholder = ({ title }: { title: string }) => (
-  <div className="flex items-center justify-center h-full text-text-3 text-xl font-semibold">{title} - Coming Soon</div>
-);
+import { Setups } from './features/setups/Setups';
+import { Goals } from './features/goals/Goals';
 
 export default function App() {
   return (
@@ -44,10 +41,8 @@ export default function App() {
                 <Route path="/settings" element={<Settings />} />
                 <Route path="/reports" element={<Reports />} />
                 <Route path="/calendar" element={<Calendar />} />
-                
-                {/* Placeholders for requested routes to ensure no dead links */}
-                <Route path="/setups" element={<Placeholder title="Setups" />} />
-                <Route path="/goals" element={<Placeholder title="Goals" />} />
+                <Route path="/setups" element={<Setups />} />
+                <Route path="/goals" element={<Goals />} />
               </Routes>
             </main>
           </div>

@@ -1,4 +1,5 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { scaleIn } from '../../lib/animations';
@@ -12,7 +13,10 @@ interface Props {
 }
 
 export const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }: Props) => {
-  return (
+  // Portal to <body> so this always paints above the Sidebar/Topbar, even
+  // when a call site (e.g. a routed page) nests it inside App.tsx's
+  // `relative z-10` content wrapper, which would otherwise trap its z-index.
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center">
@@ -51,6 +55,7 @@ export const ConfirmDialog = ({ isOpen, onClose, onConfirm, title, message }: Pr
           </motion.div>
         </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };

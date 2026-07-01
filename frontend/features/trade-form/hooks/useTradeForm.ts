@@ -3,10 +3,10 @@ import { useAppContext } from '../../../context/AppContext';
 import toast from 'react-hot-toast';
 import { getNetPnL, filterByAccount } from '../../../data/mockTrades';
 import { getAssetSpec } from '../../../lib/assetSpecs';
-import { SESSIONS, SETUPS, EMOTIONS, CHECKLIST_ITEMS } from '../constants';
+import { SESSIONS, EMOTIONS } from '../constants';
 
 export const useTradeForm = () => {
-  const { setOpenNewTrade, addTrade, updateTrade, editingTrade, accounts, selectedAccountId: activeAccountId, trades, openNewTrade } = useAppContext();
+  const { setOpenNewTrade, addTrade, updateTrade, editingTrade, accounts, selectedAccountId: activeAccountId, trades, openNewTrade, setups } = useAppContext();
 
   const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(activeAccountId ?? accounts[0]?.id);
   const [pair, setPair] = useState('EURUSD');
@@ -83,18 +83,35 @@ export const useTradeForm = () => {
     setChecklist(prev => prev.includes(item) ? prev.filter(x => x !== item) : [...prev, item]);
   };
 
-  const checklistScore = Math.round((checklist.length / CHECKLIST_ITEMS.length) * 100);
+  // The checklist is the selected Setup's own entry criteria (from the
+  // Setups playbook) — not a generic static list. Switching setups swaps
+  // the checklist and clears any progress checked against the old one.
+  const checklistItems = useMemo(() => {
+    const matched = setups.find(s => s.name === setup);
+    return matched?.rules ?? [];
+  }, [setups, setup]);
+
+  const handleSetupChange = (newSetup: string) => {
+    setSetup(newSetup);
+    setChecklist([]);
+  };
+
+  const checklistScore = checklistItems.length > 0
+    ? Math.round((checklist.length / checklistItems.length) * 100)
+    : 0;
 
   // Dynamic Setup Quality Score Engine
   const setupQualityScore = useMemo(() => {
-    const checklistWeight = (checklist.length / CHECKLIST_ITEMS.length) * 60;
+    const checklistWeight = checklistItems.length > 0
+      ? (checklist.length / checklistItems.length) * 60
+      : 0;
 
     let emotionWeight = 25; // Neutral
     if (['Focused', 'Patient'].includes(emotion)) emotionWeight = 40;
     if (['Rushed', 'FOMO', 'Unsure'].includes(emotion)) emotionWeight = 10;
 
     return Math.round(checklistWeight + emotionWeight);
-  }, [checklist, emotion]);
+  }, [checklist, checklistItems, emotion]);
 
   // Screenshot Handlers
   const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
@@ -242,7 +259,7 @@ export const useTradeForm = () => {
 
   const accountOptions = accounts.map(a => ({ value: a.id, label: a.name }));
   const sessionOptions = SESSIONS.map(s => ({ value: s, label: s }));
-  const setupOptions = SETUPS.map(s => ({ value: s, label: s }));
+  const setupOptions = setups.map(s => ({ value: s.name, label: s.name }));
   const emotionOptions = EMOTIONS.map(e => ({ value: e, label: e }));
 
   return {
@@ -257,10 +274,10 @@ export const useTradeForm = () => {
     sl, setSl,
     tp, setTp,
     lotSize, setLotSize,
-    setup, setSetup,
+    setup, setSetup, handleSetupChange,
     emotion, setEmotion,
     mistakes, toggleMistake,
-    checklist, toggleChecklist,
+    checklist, toggleChecklist, checklistItems,
     notes, setNotes,
     isSubmitting,
     screenshot, setScreenshot,

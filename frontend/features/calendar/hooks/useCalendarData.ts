@@ -72,6 +72,20 @@ export const useCalendarData = ({
     });
   }, [currentMonth, matrixEnd, matrixStart, visibleTrades]);
 
+  // Peak daily profit/loss this month — lets each day cell's glow intensity
+  // scale relative to the month's most active day (same convention as the
+  // Trading Activity Heatmap's maxProfit/maxLoss).
+  const { maxDayProfit, maxDayLoss } = useMemo(() => {
+    let maxP = 0;
+    let maxL = 0;
+    calendarDays.forEach((day) => {
+      if (!day.inMonth) return;
+      if (day.pnl > maxP) maxP = day.pnl;
+      if (day.pnl < maxL) maxL = day.pnl;
+    });
+    return { maxDayProfit: maxP || 1, maxDayLoss: Math.abs(maxL) || 1 };
+  }, [calendarDays]);
+
   const selectedWeekStart = hoveredWeekStart ?? startOfWeek(new Date(), { weekStartsOn: 1 });
   const weekStats = useMemo(() => buildWeekStats(selectedWeekStart, visibleTrades), [selectedWeekStart, visibleTrades]);
 
@@ -120,6 +134,8 @@ export const useCalendarData = ({
     visibleTrades,
     monthLabel,
     calendarDays,
+    maxDayProfit,
+    maxDayLoss,
     weekStats,
     microStats,
     monthlyWeeks,

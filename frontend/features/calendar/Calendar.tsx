@@ -26,6 +26,8 @@ export const Calendar = () => {
   const {
     monthLabel,
     calendarDays,
+    maxDayProfit,
+    maxDayLoss,
     weekStats,
     microStats,
     monthlyWeeks,
@@ -65,6 +67,8 @@ export const Calendar = () => {
 
             <CalendarGrid
               calendarDays={calendarDays}
+              maxDayProfit={maxDayProfit}
+              maxDayLoss={maxDayLoss}
               onHoverWeek={setHoveredWeekStart}
               onSelectDay={setSelectedDay}
               privacyMode={privacyMode}

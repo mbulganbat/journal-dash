@@ -4,7 +4,7 @@ import { IconCalendar, IconChevronLeft, IconChevronRight } from '@tabler/icons-r
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, getDay, isSameDay, isSameMonth } from 'date-fns';
 
 // Custom Date Picker Component
-export const CustomDatePicker = ({ date, setDate }: { date: Date, setDate: (d: Date) => void }) => {
+export const CustomDatePicker = ({ date, setDate, label = 'Date' }: { date: Date, setDate: (d: Date) => void, label?: string }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(date);
   const calendarRef = useRef<HTMLDivElement>(null);
@@ -28,7 +28,7 @@ export const CustomDatePicker = ({ date, setDate }: { date: Date, setDate: (d: D
 
   return (
     <div className="relative w-full" ref={calendarRef}>
-      <label className="block text-[10px] uppercase text-text-3 tracking-wide mb-1.5">Date</label>
+      <label className="block text-[10px] uppercase text-text-3 tracking-wide mb-1.5">{label}</label>
       <div
         onClick={() => setIsOpen(!isOpen)}
         className={`bg-[#16161A] border ${isOpen ? 'border-[#00FFB2]/40' : 'border-white/[0.08]'} rounded-xl h-11 px-4 flex justify-between items-center text-text-1 hover:border-[#00FFB2]/20 transition-all cursor-pointer`}

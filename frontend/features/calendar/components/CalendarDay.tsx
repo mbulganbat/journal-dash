@@ -5,33 +5,58 @@ import { formatCurrency, moneyClass, privacyStyle } from '../utils';
 
 interface Props {
   day: CalendarDayType;
+  maxDayProfit: number;
+  maxDayLoss: number;
   onHoverWeek: (weekStart: Date) => void;
   onSelect: (day: CalendarDayType) => void;
   privacyMode: boolean;
 }
 
-export const CalendarDay = ({ day, onHoverWeek, onSelect, privacyMode }: Props) => {
+export const CalendarDay = ({ day, maxDayProfit, maxDayLoss, onHoverWeek, onSelect, privacyMode }: Props) => {
   const hasTrades = day.trades.length > 0;
   const weekStart = startOfWeek(day.date, { weekStartsOn: 1 });
   const isPositive = day.pnl > 0;
   const isNegative = day.pnl < 0;
 
+  // Glow intensity scales with how big this day's P&L was relative to the
+  // month's most active day — same convention as the Trading Activity
+  // Heatmap. At rest, a soft ambient corner glow (the same blurred-blob
+  // technique used by MetricCard/SetupCard) tints the card; on hover, the
+  // glow extends outward into a halo around the whole card.
+  const intensity = isPositive
+    ? Math.min(day.pnl / maxDayProfit, 1)
+    : isNegative
+      ? Math.min(Math.abs(day.pnl) / maxDayLoss, 1)
+      : 0;
+  const glowRgb = isPositive ? '0,255,178' : isNegative ? '255,90,90' : hasTrades ? '255,184,0' : null;
+  const glowOpacity = isPositive || isNegative ? 0.32 + intensity * 0.38 : hasTrades ? 0.28 : 0;
+  const hoverShadow = glowRgb
+    ? `0 0 ${14 + intensity * 30}px rgba(${glowRgb}, ${(0.18 + intensity * 0.27).toFixed(2)})`
+    : '0 0 16px rgba(255,255,255,0.06)';
+
   return (
     <motion.button
       type="button"
       disabled={!day.inMonth || !hasTrades}
-      whileHover={hasTrades && day.inMonth ? { scale: 1.03, y: -2 } : undefined}
+      animate={{ boxShadow: '0 0 0px rgba(0,0,0,0)' }}
+      whileHover={hasTrades && day.inMonth ? { scale: 1.03, y: -2, boxShadow: hoverShadow } : undefined}
+      transition={{ boxShadow: { duration: 0.3 }, default: { duration: 0.2 } }}
       onMouseEnter={() => onHoverWeek(weekStart)}
       onFocus={() => onHoverWeek(weekStart)}
       onClick={() => hasTrades && day.inMonth && onSelect(day)}
-      className={`min-h-[96px] md:min-h-[124px] rounded-[20px] border p-3 text-left transition-all relative overflow-hidden ${
+      className={`min-h-[96px] md:min-h-[124px] rounded-[20px] border p-3 text-left transition-colors relative overflow-hidden ${
         day.inMonth
           ? 'bg-[#080808] border-white/[0.06] hover:border-white/[0.14]'
           : 'bg-white/[0.02] border-white/[0.04] opacity-20 cursor-not-allowed'
-      } ${hasTrades && day.inMonth ? 'cursor-pointer' : 'cursor-default'} ${
-        isPositive ? 'hover:shadow-[0_0_24px_rgba(0,255,178,0.10)]' : ''
-      } ${isNegative ? 'hover:shadow-[0_0_24px_rgba(255,90,90,0.10)]' : ''}`}
+      } ${hasTrades && day.inMonth ? 'cursor-pointer' : 'cursor-default'}`}
     >
+      {hasTrades && glowRgb && (
+        <div
+          className="absolute -bottom-6 -right-6 w-20 h-20 rounded-full blur-xl pointer-events-none"
+          style={{ background: `radial-gradient(circle, rgba(${glowRgb}, ${glowOpacity.toFixed(3)}) 0%, rgba(${glowRgb}, 0) 72%)` }}
+        />
+      )}
+
       <div className="flex items-start justify-between gap-2">
         <span className={`text-sm font-bold ${day.inMonth ? 'text-text-1' : 'text-text-3'}`}>
           {format(day.date, 'd')}
@@ -43,34 +68,14 @@ export const CalendarDay = ({ day, onHoverWeek, onSelect, privacyMode }: Props) 
         ) : null}
       </div>
 
-      <div className="absolute left-3 right-3 bottom-3">
-        {hasTrades ? (
-          <>
-            <div className="flex items-center gap-1.5 mb-3 overflow-hidden">
-              {day.trades.slice(0, 8).map((trade) => (
-                <span
-                  key={trade.id}
-                  className={`h-1.5 flex-1 rounded-full min-w-[8px] ${
-                    trade.result === 'win'
-                      ? 'bg-[#00FFB2] shadow-[0_0_8px_rgba(0,255,178,0.45)]'
-                      : trade.result === 'loss'
-                        ? 'bg-[#FF5A5A]'
-                        : 'bg-[#FFB800]'
-                  }`}
-                />
-              ))}
-            </div>
-            <div
-              className={`text-xs font-extrabold ${moneyClass(day.pnl)}`}
-              style={privacyStyle(privacyMode)}
-            >
-              {formatCurrency(day.pnl)}
-            </div>
-          </>
-        ) : (
-          <div className="h-1.5 rounded-full bg-white/[0.04]" />
-        )}
-      </div>
+      {hasTrades && (
+        <div
+          className={`absolute left-3 right-3 bottom-3 text-xs font-extrabold ${moneyClass(day.pnl)}`}
+          style={privacyStyle(privacyMode)}
+        >
+          {formatCurrency(day.pnl)}
+        </div>
+      )}
     </motion.button>
   );
 };
