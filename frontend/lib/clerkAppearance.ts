@@ -10,6 +10,9 @@ export const clerkAppearance = {
     colorInputText: '#F0F0F0',
     colorText: '#F0F0F0',
     colorTextSecondary: '#A0A0B0',
+    // Clerk derives borders/secondary text from colorNeutral; on a dark
+    // colorBackground it must be light or social-button labels render dark-on-dark.
+    colorNeutral: '#F0F0F0',
     colorDanger: '#FF5A5A',
     borderRadius: '0.75rem',
     fontFamily: 'Inter, sans-serif'
@@ -18,7 +21,8 @@ export const clerkAppearance = {
     card: 'shadow-2xl border border-white/[0.06]',
     headerTitle: 'text-text-1',
     headerSubtitle: 'text-text-3',
-    socialButtonsBlockButton: 'border border-white/[0.08] hover:bg-white/[0.04]',
+    socialButtonsBlockButton: 'border border-white/[0.08] hover:bg-white/[0.04] text-text-1',
+    socialButtonsBlockButtonText: 'text-text-1 font-medium',
     formButtonPrimary: 'bg-em hover:bg-em-2 text-black font-bold shadow-[0_0_20px_rgba(0,255,178,0.25)]',
     footerActionLink: 'text-em hover:text-em-2',
     modalContent: 'border border-white/[0.06]',
