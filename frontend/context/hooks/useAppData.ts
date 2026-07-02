@@ -7,7 +7,6 @@ import { tradesRepo } from '../../lib/db/trades';
 import { setupsRepo } from '../../lib/db/setups';
 import { goalsRepo } from '../../lib/db/goals';
 import { settingsRepo, DEFAULT_SETTINGS } from '../../lib/db/settings';
-import { importLocalData } from '../../lib/db/importLocal';
 import { useSyncedCollection } from './useSyncedCollection';
 
 // Owns every piece of cloud-persisted state and its CRUD surface. The provider
@@ -39,13 +38,11 @@ export function useAppData() {
       ] as const);
 
     (async () => {
-      let [accs, trds, stps, gls, stg] = await listAll();
-
-      // First login after the localStorage era: lift the local data up once.
-      const dbEmpty = !accs.length && !trds.length && !stps.length && !gls.length && !stg;
-      if (dbEmpty && (await importLocalData(userId))) {
-        [accs, trds, stps, gls, stg] = await listAll();
-      }
+      // A brand-new user simply gets empty collections — the DB (scoped to
+      // this user by RLS) is the single source of truth. The one-time
+      // localStorage→DB import that used to live here was removed after the
+      // original local data was lifted to Supabase on 2026-07-02.
+      const [accs, trds, stps, gls, stg] = await listAll();
       if (cancelled) return;
 
       accounts.load(accs);
