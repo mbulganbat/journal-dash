@@ -11,8 +11,5 @@
   },
   "devDependencies": {
     "concurrently": "latest"
-  },
-  "dependencies": {
-    "@supabase/server": "^1.2.0"
   }
 }
