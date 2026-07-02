@@ -26,7 +26,7 @@ Anything **new** in that output gets split before moving on. Pre-existing entrie
 - **Monorepo** (npm workspaces): `frontend/` + `backend/`. Root `package.json` has a `dev` script (`concurrently` runs both).
 - **Frontend**: Vite + **React 19** + **TypeScript** (strict; `noUnusedLocals`/`noUnusedParameters` intentionally off) + **Tailwind via CDN** (`cdn.tailwindcss.com` in `frontend/index.html`, config inline there — not a real build yet) + framer-motion + recharts + @tabler/icons-react + react-router-dom (**HashRouter**) + react-hot-toast + date-fns + **`@clerk/clerk-react`** (new this session — see §5.7).
 - **Auth**: Clerk. `<ClerkProvider>` wraps the root in `index.tsx`; `App.tsx` gates the whole app shell behind `<SignedIn>`/`<SignedOut>`. Publishable key in `frontend/.env` (gitignored) as `VITE_CLERK_PUBLISHABLE_KEY`. **A `frontend/.env.example` now exists** — copy it to `.env` and fill in a real key on any fresh clone.
-- **State**: single React Context (`frontend/context/AppContext.tsx`) persisted to **localStorage**. Keys: `lumex_trades`, `lumex_accounts`, `lumex_settings`, `lumex_selected_account`, and (new) `lumex_setups`, `lumex_goals`. **No backend data layer yet — this is the next major phase (§7.1).**
+- **State**: single React Context (`frontend/context/AppContext.tsx`, now 88 lines) backed by **Supabase Postgres** (project `vzebhiqvanuxtzfgfeow`, "Trading journal", ap-northeast-2). Clerk is the auth source via Supabase **Third-Party Auth** — every request carries the Clerk session token (`lib/supabase.ts`), RLS keys rows to the JWT `sub` claim. Data flow: `lib/db/*` repos (camelCase↔snake_case mappers + generic `createRepo`) → `context/hooks/useSyncedCollection.ts` (optimistic updates, toast on failure) → `context/hooks/useAppData.ts` (orchestration, one-time localStorage→DB import on first empty-DB login) → provider. localStorage now only holds `lumex_selected_account` (device-local UI pref) and the legacy `lumex_*` keys read once by the import. New users start empty (no more mock seeding).
 - **Backend** (`backend/`): a Google **Vertex AI proxy**, unused by the app (every "AI insight" in the UI is a hardcoded string). Not touched this session. Still undecided whether to keep it (§7.3).
 - Mock/seed data + the de-facto stats library live in `frontend/data/mockTrades.ts` (`getNetPnL`, `getWinRate`, `getEquityCurve`, `groupBySession`, `getFundedProgress`, `getAvgRR`, etc.), now also seeding `mockSetups`/`mockGoals`.
 
@@ -150,8 +150,9 @@ Fix (`features/trade-form/hooks/useTradeForm.ts`): new `checklistItems` memo fin
   | `features/analytics/Analytics.tsx` | 308 | Pre-existing from Phase B, not touched this session. |
   | `features/trade-form/hooks/useTradeForm.ts` | 295 | Grew this session (checklist wiring, §5.9). |
   | `features/trade-form/components/TradeFormFields.tsx` | 292 | Grew this session (checklist wiring, §5.9). |
-  | `context/AppContext.tsx` | 219 | Grew this session (setups/goals state + CRUD). |
   | `features/calendar/components/CalendarHeader.tsx` | 185 | Pre-existing from Phase B, not touched this session. |
+
+  (`context/AppContext.tsx` was on this list at 219 — the Supabase migration split it to 88 + `hooks/useAppData.ts` 149 + `hooks/useSyncedCollection.ts` 69.)
 
   Everything else created or touched this session is under 170 (highest: `useCalendarData.ts` at 147). If you're about to make substantial edits to any file in this table, consider splitting it first per §0 rule 4 — but don't block unrelated work on it.
 
@@ -164,13 +165,12 @@ Fix (`features/trade-form/hooks/useTradeForm.ts`): new `checklistItems` memo fin
 - [x] ~~Commit `frontend/.env.example`~~ — done (committed alongside this checklist update).
 - [x] ~~Root `package.json` `@supabase/server` dependency~~ — done. Turned out to be a real Supabase package (server-side/Edge Functions utils), not a typo-squat, but still the wrong one for a browser SPA. Removed from root; `@supabase/supabase-js@^2.110.0` added to `frontend/package.json` instead, ready for §7.1.
 
-### 7.1 Supabase — next major phase (not started)
-This is the natural next step after Clerk (auth is done; data layer is next):
-1. Design schema: `accounts`, `trades`, `settings`, `setups`, `goals` tables, each FK'd to a user identifier tied to the signed-in Clerk user.
-2. Wire Clerk ↔ Supabase auth. **Check current Supabase docs when you start this** — Supabase has first-class "Third-Party Auth" support for Clerk now, which may supersede any older JWT-template-based approach; don't assume implementation details without checking, since this integration surface moves.
-3. Set up Row Level Security policies keyed on that user identifier.
-4. Add `@supabase/supabase-js`, migrate `AppContext`'s localStorage read/write to Supabase queries — **feature by feature**, using the existing `loadFromStorage` pattern as the seam to swap (trades first is a reasonable start, since it's the most-used data).
-5. Decide on loading/optimistic-update states once real network calls replace synchronous localStorage reads.
+### 7.1 Supabase — ✅ DONE (2026-07-02)
+Shipped end-to-end and verified live (all REST calls 200, localStorage import landed 3 accounts / 51 trades / 5 setups / 1 settings row, settings write round-trip confirmed in both directions):
+1. Schema migration `initial_schema` on project `vzebhiqvanuxtzfgfeow`: 5 tables, `user_id text default (auth.jwt()->>'sub')`, per-operation RLS policies (initplan-friendly `(select auth.jwt()->>'sub')` form), FK cascades (account→trades cascade delete, setup→goals set-null), ownership indexes. Security advisors: clean.
+2. Clerk ↔ Supabase wired via **Third-Party Auth** (the current official path; old JWT-template approach is deprecated). Clerk side activated at dashboard.clerk.com/setup/supabase; Supabase side has the Clerk integration registered with domain `pro-whippet-53.clerk.accounts.dev`. Client passes `accessToken: () => window.Clerk.session.getToken()` (`lib/supabase.ts`).
+3. Frontend architecture (see §1 State bullet for the layer diagram): `lib/db/` repos + `useSyncedCollection` (optimistic writes) + `useAppData` (load orchestration + one-time import). `AppContextValue` API unchanged — zero consumer edits.
+4. Loading state: provider renders a minimal splash until the initial fetch resolves; failures fail open to an empty app with a toast.
 
 ### 7.2 Vercel deployment (blocked on Tailwind migration)
 - Migrate Tailwind from the CDN (`cdn.tailwindcss.com` is dev-only — warns in console, doesn't tree-shake) to a real Tailwind/PostCSS build.
@@ -191,4 +191,6 @@ This is the natural next step after Clerk (auth is done; data layer is next):
 - **Vite HMR stale-delete bug**: after removing a moved/renamed file, the dev server may keep logging `[vite] Failed to reload /old/path.tsx`. Not a real error — restart the preview server (`preview_stop` + `preview_start`) to confirm a truly clean console.
 - Tailwind config (colors like `bg-2`, `text-1`, `em`, `danger`, radii like `rounded-card`) lives **inline in `frontend/index.html`**, not a separate config file.
 - Backend `.env.local` uses `//` comments (Node's `--env-file` tolerates it). Backend is unused by the app — don't block frontend work on it.
+- **Supabase gotchas** (from the §7.1 build): `settings` upsert must include `user_id` explicitly (upsert can't detect a PK conflict on a column the payload omits — collections don't have this problem because `id` is always sent). The Supabase **MCP server is connected** — use it for migrations/SQL/advisors instead of asking the user for keys. `goals.current` is `current_value` in the DB (avoids any reserved-word ambiguity); mappers in `lib/db/goals.ts` handle it.
+- **Verifying signed-in flows**: the Claude Preview browser has no Clerk session — use the claude-in-chrome MCP against the user's own Chrome (they're signed in there), and remember its network/console tracking only starts after the first read call (reload the page after attaching, and note a cross-domain redirect like the Clerk sign-in flow clears it).
 - User communicates in **Mongolian (romanized)**; reply in Mongolian. Common shorthand: "zas" = fix, "nem" = add, "hii"/"hiy" = do/build, "urgeljluul" = continue, "daraagiihaa" = next.
