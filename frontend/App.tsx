@@ -1,63 +1,47 @@
-import React from 'react';
-import { HashRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { HashRouter as Router } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
-import { SignedIn, SignedOut } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, useUser } from '@clerk/clerk-react';
 import { AppProvider } from './context/AppContext';
-import { Background } from './components/layout/Background';
-import { Sidebar } from './components/layout/Sidebar';
-import { Topbar } from './components/layout/Topbar';
+import { DemoProvider } from './context/DemoProvider';
+import { AppShell } from './components/layout/AppShell';
+import { DemoBanner } from './components/layout/DemoBanner';
 import { SignInGate } from './components/auth/SignInGate';
-import { NewTradePanel } from './features/trade-form/NewTradePanel';
-import { ImportModal } from './components/modals/ImportModal';
-import { ManageAccountsModal } from './features/accounts/ManageAccountsModal';
-
-// Pages
-import { Dashboard } from './features/dashboard/Dashboard';
-import { Journal } from './features/journal/Journal';
-import { Trades } from './pages/Trades';
-import { Analytics } from './features/analytics/Analytics';
-import { TradeDetail } from './features/trade-detail/TradeDetail';
-import { Settings } from './features/settings/Settings';
-import { Reports } from './features/reports/Reports';
-import { Calendar } from './features/calendar/Calendar';
-import { Setups } from './features/setups/Setups';
-import { Goals } from './features/goals/Goals';
 
 export default function App() {
+  const { isSignedIn } = useUser();
+
+  // Demo mode: browse the app on sample data without an account. Session-
+  // scoped so a refresh keeps the tour going but a new visit starts clean.
+  const [demoMode, setDemoMode] = useState(
+    () => sessionStorage.getItem('lumex_demo') === '1'
+  );
+
+  useEffect(() => {
+    sessionStorage.setItem('lumex_demo', demoMode ? '1' : '0');
+  }, [demoMode]);
+
+  // A real sign-in always wins over a lingering demo flag.
+  useEffect(() => {
+    if (isSignedIn && demoMode) setDemoMode(false);
+  }, [isSignedIn, demoMode]);
+
   return (
     <Router>
       <SignedOut>
-        <SignInGate />
+        {demoMode ? (
+          <DemoProvider>
+            <AppShell />
+            <DemoBanner onExit={() => setDemoMode(false)} />
+          </DemoProvider>
+        ) : (
+          <SignInGate onDemo={() => setDemoMode(true)} />
+        )}
       </SignedOut>
 
       <SignedIn>
         <AppProvider>
-          <div className="flex min-h-screen bg-bg-0 text-text-1 selection:bg-em/30">
-            <Background />
-            <Sidebar />
-
-            <div className="ml-[224px] flex flex-col flex-1 min-w-0 min-h-screen relative z-10">
-              <Topbar />
-              <main className="flex-1 overflow-y-auto">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/journal" element={<Journal />} />
-                  <Route path="/trades" element={<Trades />} />
-                  <Route path="/analytics" element={<Analytics />} />
-                  <Route path="/trade/:id" element={<TradeDetail />} />
-                  <Route path="/settings" element={<Settings />} />
-                  <Route path="/reports" element={<Reports />} />
-                  <Route path="/calendar" element={<Calendar />} />
-                  <Route path="/setups" element={<Setups />} />
-                  <Route path="/goals" element={<Goals />} />
-                </Routes>
-              </main>
-            </div>
-          </div>
-
-          <NewTradePanel />
-          <ImportModal />
-          <ManageAccountsModal />
+          <AppShell />
         </AppProvider>
       </SignedIn>
 

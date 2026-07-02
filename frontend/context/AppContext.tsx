@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { Trade, AppContextValue } from '../types';
 import { useAppData } from './hooks/useAppData';
 
-const AppContext = createContext<AppContextValue | undefined>(undefined);
+// Exported so DemoProvider can supply the same context with canned data.
+export const AppContext = createContext<AppContextValue | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const data = useAppData();
