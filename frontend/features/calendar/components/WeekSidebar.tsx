@@ -40,7 +40,7 @@ export const WeekSidebar = ({ weekStats, weekTone, weeklyNetPnlValue, monthlyWee
           </div>
 
           <div
-            className="w-full h-[90px] flex flex-col justify-between p-4 rounded-2xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06] overflow-hidden flex-shrink-0 min-w-0"
+            className="w-full h-[90px] flex flex-col justify-between p-4 rounded-2xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06] overflow-hidden shrink-0 min-w-0"
             style={{
               borderColor: `${weekTone}33`,
               background: `linear-gradient(145deg, ${weekTone}12, rgba(255,255,255,0.02))`,
@@ -67,7 +67,7 @@ export const WeekSidebar = ({ weekStats, weekTone, weeklyNetPnlValue, monthlyWee
               <div
                 key={label}
                 title={`${label}: ${value}`}
-                className="w-full h-[90px] flex flex-col justify-between p-4 rounded-2xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06] overflow-hidden flex-shrink-0"
+                className="w-full h-[90px] flex flex-col justify-between p-4 rounded-2xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06] overflow-hidden shrink-0"
               >
                 <div className="flex items-center gap-2 min-w-0">
                   <Icon size={16} className="text-white/40 shrink-0" />
@@ -83,7 +83,7 @@ export const WeekSidebar = ({ weekStats, weekTone, weeklyNetPnlValue, monthlyWee
             ))}
           </div>
 
-          <div className="w-full rounded-2xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06] p-4 flex-shrink-0 overflow-hidden">
+          <div className="w-full rounded-2xl bg-[rgba(255,255,255,0.03)] border border-white/[0.06] p-4 shrink-0 overflow-hidden">
             <p className="text-[10px] font-semibold tracking-widest text-white/40 uppercase mb-3">
               Monthly Overview
             </p>

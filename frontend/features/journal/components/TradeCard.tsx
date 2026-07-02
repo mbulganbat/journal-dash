@@ -88,7 +88,7 @@ export const TradeCard = ({ trade, onView, onEdit, onDelete }: { trade: Trade, o
         <div className="absolute inset-0 bg-gradient-to-t from-[#0C0C0E] via-transparent to-transparent opacity-90 pointer-events-none z-10" />
 
         {/* Hover Overlay */}
-        <div className="absolute inset-0 bg-[#0C0C0E]/80 backdrop-blur-sm flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+        <div className="absolute inset-0 bg-[#0C0C0E]/80 backdrop-blur-xs flex items-center justify-center gap-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
           <button onClick={onView} className="w-12 h-12 rounded-full bg-white/[0.08] hover:bg-[#00FFB2] hover:text-black text-text-1 flex items-center justify-center transition-colors shadow-xl">
             <IconEye size={20} stroke={2.5} />
           </button>

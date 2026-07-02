@@ -101,10 +101,10 @@ export const ProgressBar = ({ percentage, colorClass = 'bg-em' }: { percentage: 
   );
 };
 
-export const TagPill = ({ children, active, onClick, color = 'em' }: { children: ReactNode, active: boolean, onClick: () => void, color?: string }) => {
+export const TagPill = ({ children, active, onClick }: { children: ReactNode, active: boolean, onClick: () => void }) => {
   const base = "px-3 py-1.5 rounded-xl text-xs font-medium cursor-pointer transition-all duration-200 border";
-  const activeClasses = active 
-    ? `bg-${color}/10 text-${color} border-${color}/30` 
+  const activeClasses = active
+    ? "bg-em/10 text-em border-em/30"
     : "bg-white/[0.04] text-text-2 border-white/[0.08] hover:bg-white/[0.08]";
     
   return (
@@ -121,7 +121,7 @@ export const Toggle = ({ checked, onChange }: { checked: boolean, onChange: () =
       onClick={onChange}
     >
       <motion.div 
-        className="w-4 h-4 bg-white rounded-full shadow-sm"
+        className="w-4 h-4 bg-white rounded-full shadow-xs"
         animate={{ x: checked ? 16 : 0 }}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
       />

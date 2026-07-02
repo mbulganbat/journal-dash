@@ -1,0 +1,81 @@
+@import 'tailwindcss';
+
+/* Design tokens — ported verbatim from the old inline CDN config in index.html. */
+@theme {
+  --font-sans: 'Inter', sans-serif;
+
+  --color-bg-0: #050505;
+  --color-bg-1: #080808;
+  --color-bg-2: #0c0c0e;
+  --color-bg-3: #111114;
+  --color-bg-4: #16161a;
+  --color-bg-5: #1c1c22;
+  --color-em: #00ffb2;
+  --color-em-2: #00e5a0;
+  --color-em-3: #14f195;
+  --color-success: #00ffb2;
+  --color-warning: #ffb800;
+  --color-danger: #ff5a5a;
+  --color-text-1: #f0f0f0;
+  --color-text-2: #a0a0b0;
+  --color-text-3: #505060;
+
+  --radius-card: 20px;
+  --radius-card-sm: 14px;
+  --radius-pill: 9999px;
+}
+
+@layer base {
+  /* Tailwind v3 default border color. The app was written against the CDN's
+     v3 engine, where a bare `border` rendered gray-200 — keep that behavior
+     instead of v4's currentColor default. */
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentColor);
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+    background-color: var(--color-bg-0);
+    color: var(--color-text-1);
+    font-family: var(--font-sans);
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1c1c22;
+    border-radius: 10px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #505060;
+  }
+
+  /* Hide number input arrows */
+  input[type='number']::-webkit-inner-spin-button,
+  input[type='number']::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+
+  /* Date input icon inversion for dark mode */
+  ::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+    opacity: 0.5;
+    cursor: pointer;
+  }
+}
