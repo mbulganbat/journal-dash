@@ -160,7 +160,7 @@ Fix (`features/trade-form/hooks/useTradeForm.ts`): new `checklistItems` memo fin
 ## 7. What's LEFT — next steps, in order
 
 ### 7.0 Immediate housekeeping
-- [ ] Confirm the user has rotated their Clerk **Secret Key** in the Clerk dashboard (it was exposed in chat — see §5.10). Only the Publishable Key should ever be needed here.
+- [x] ~~Clerk Secret Key rotation~~ — confirmed done by the user (2026-07-02): created a new secret key in the Clerk dashboard and deleted the old exposed one, which revokes it. The new secret key lives only in the dashboard — this project never needs it (frontend uses the Publishable Key only).
 - [x] ~~Commit `frontend/.env.example`~~ — done (committed alongside this checklist update).
 - [x] ~~Root `package.json` `@supabase/server` dependency~~ — done. Turned out to be a real Supabase package (server-side/Edge Functions utils), not a typo-squat, but still the wrong one for a browser SPA. Removed from root; `@supabase/supabase-js@^2.110.0` added to `frontend/package.json` instead, ready for §7.1.
 
