@@ -6,7 +6,6 @@ import {
   IconChartHistogram, IconTemplate, IconCalendarStats, 
   IconReportAnalytics, IconTarget, IconSettings, IconChevronRight 
 } from '@tabler/icons-react';
-import { UserButton } from '@clerk/clerk-react';
 import { useAppContext } from '../../context/AppContext';
 import { format } from 'date-fns';
 import { toZonedTime } from '../../lib/timezone';
@@ -124,7 +123,6 @@ export const Sidebar = () => {
           </div>
           <IconChevronRight size={16} className="text-text-3 ml-auto shrink-0" />
         </div>
-        <UserButton afterSignOutUrl="/" appearance={{ elements: { avatarBox: 'w-8 h-8' } }} />
       </div>
     </div>
   );

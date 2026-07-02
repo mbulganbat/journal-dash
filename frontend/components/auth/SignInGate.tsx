@@ -4,30 +4,8 @@ import { IconBolt } from '@tabler/icons-react';
 import { Background } from '../layout/Background';
 import { fadeUp } from '../../lib/animations';
 
-// Matches this app's dark/mint palette so Clerk's hosted UI doesn't look
-// like a foreign widget dropped into a premium dark app.
-const clerkAppearance = {
-  variables: {
-    colorPrimary: '#00FFB2',
-    colorBackground: '#0C0C0E',
-    colorInputBackground: '#111114',
-    colorInputText: '#F0F0F0',
-    colorText: '#F0F0F0',
-    colorTextSecondary: '#A0A0B0',
-    colorDanger: '#FF5A5A',
-    borderRadius: '0.75rem',
-    fontFamily: 'Inter, sans-serif'
-  },
-  elements: {
-    card: 'shadow-2xl border border-white/[0.06]',
-    headerTitle: 'text-text-1',
-    headerSubtitle: 'text-text-3',
-    socialButtonsBlockButton: 'border border-white/[0.08] hover:bg-white/[0.04]',
-    formButtonPrimary: 'bg-em hover:bg-em-2 text-black font-bold shadow-[0_0_20px_rgba(0,255,178,0.25)]',
-    footerActionLink: 'text-em hover:text-em-2'
-  }
-};
-
+// The dark/mint Clerk theming lives in lib/clerkAppearance.ts and is applied
+// globally at the ClerkProvider level, so <SignIn> here inherits it.
 export const SignInGate = () => {
   return (
     <div className="relative min-h-screen w-full flex items-center justify-center bg-bg-0 text-text-1 overflow-hidden">
@@ -44,7 +22,7 @@ export const SignInGate = () => {
           <span className="text-[20px] font-bold text-text-1 tracking-tight">Lumex</span>
         </div>
 
-        <SignIn appearance={clerkAppearance} />
+        <SignIn />
       </motion.div>
     </div>
   );
